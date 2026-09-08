@@ -1,0 +1,26 @@
+{
+  "name": "fortnite-account-lister",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "build:catalog": "node scripts/build-catalog.mjs",
+    "check:catalog": "node scripts/check-catalog.mjs",
+    "check": "npm run typecheck && npm run check:catalog"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.0",
+    "next": "^16.3.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "typescript": "5.9.2"
+  }
+}
