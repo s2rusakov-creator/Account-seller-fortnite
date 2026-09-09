@@ -34,11 +34,9 @@ export function ListingPanel({ locker, items, title, description, onTitle, onDes
   }
 
   return (
-    <section className="card">
+    <div className="pane">
       <div className="spread" style={{ marginBottom: 12 }}>
-        <h2 className="section-title" style={{ margin: 0 }}>
-          Текст объявления
-        </h2>
+        <h3 style={{ font: '650 15px/1.2 system-ui', margin: 0 }}>Текст объявления</h3>
         <button
           className="btn secondary small"
           onClick={() => {
@@ -50,15 +48,19 @@ export function ListingPanel({ locker, items, title, description, onTitle, onDes
         </button>
       </div>
 
-      <div className="row" style={{ marginBottom: 10 }}>
+      <div style={{ marginBottom: 10 }}>
         <input
           type="text"
           value={title}
           onChange={(event) => onTitle(event.target.value)}
-          style={{ flex: '1 1 420px' }}
+          style={{ width: '100%' }}
         />
-        <button className="btn secondary small" onClick={() => copy('title', title)}>
-          {copied === 'title' ? 'Скопировано' : 'Копировать'}
+        <button
+          className="btn secondary small"
+          onClick={() => copy('title', title)}
+          style={{ marginTop: 8 }}
+        >
+          {copied === 'title' ? 'Скопировано' : 'Копировать заголовок'}
         </button>
       </div>
 
@@ -73,6 +75,6 @@ export function ListingPanel({ locker, items, title, description, onTitle, onDes
         </button>
         {copied && copied !== 'title' && copied !== 'body' && <span className="error">{copied}</span>}
       </div>
-    </section>
+    </div>
   );
 }

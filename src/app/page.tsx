@@ -20,6 +20,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 /** Tiles rendered before the grid asks the seller to show more. */
 const FIRST_PAGE = 600;
 
+/** How long the arrival animation runs before the page settles down. */
+const ARRIVAL_MS = 1100;
+
+type Tab = 'collage' | 'listing' | 'offer' | 'screenshot';
+
 export default function Home() {
   const [locker, setLocker] = useState<LockerResult | null>(null);
   const [filter, setFilter] = useState<FilterState>(EMPTY_FILTER);
@@ -28,6 +33,10 @@ export default function Home() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [manual, setManual] = useState(false);
+  const [tab, setTab] = useState<Tab>('collage');
+  const [uploaded, setUploaded] = useState(false);
+  /** True for one second after a locker lands — drives the cascade and count-up. */
+  const [arriving, setArriving] = useState(false);
   const guide = useGuide();
 
   const onLocker = useCallback((result: LockerResult) => {
@@ -36,19 +45,27 @@ export default function Home() {
     setLimit(FIRST_PAGE);
     setPages([]);
     setManual(false);
+    setTab('collage');
+    setUploaded(false);
+    setArriving(true);
     saveLocker(result);
   }, []);
 
+  // The arrival animation is a one-shot: it must not replay when a filter
+  // moves, so it is switched off on a timer rather than derived from state.
+  useEffect(() => {
+    if (!arriving) return;
+    const timer = setTimeout(() => setArriving(false), ARRIVAL_MS);
+    return () => clearTimeout(timer);
+  }, [arriving]);
+
   // Restored after mount rather than during render: localStorage does not
   // exist on the server, and seeding state from it would not match the HTML
-  // React rendered there.
+  // React rendered there. A restored locker does not animate in — nothing
+  // arrived, it was already here.
   useEffect(() => {
     const saved = loadLocker();
-    if (saved) {
-      setLocker(saved);
-      setTitle(buildTitle(saved, saved.items));
-      setDescription(buildDescription(saved, saved.items));
-    }
+    if (saved) setLocker(saved);
   }, []);
 
   // Sorted once per read: a locker of a few thousand items is not something to
@@ -91,13 +108,30 @@ export default function Home() {
     clearLocker();
   }
 
+  const tabs: { id: Tab; label: string; hint: string }[] = [
+    { id: 'collage', label: 'Коллаж', hint: pages.length ? `${pages.length} стр.` : 'не собран' },
+    { id: 'listing', label: 'Текст', hint: 'готов' },
+    { id: 'offer', label: 'Оффер', hint: uploaded ? 'создан' : 'не выставлен' },
+    { id: 'screenshot', label: 'Скриншот', hint: 'из игры' },
+  ];
+
+  const steps: { n: string; label: string; done: boolean; go: () => void }[] = [
+    { n: '1', label: 'Аккаунт', done: true, go: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+    { n: '2', label: 'Предметы', done: true, go: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+    { n: '3', label: 'Коллаж', done: pages.length > 0, go: () => setTab('collage') },
+    { n: '4', label: 'Оффер', done: uploaded, go: () => setTab('offer') },
+  ];
+
   return (
     <main className="page">
       <header className="top">
-        <div>
-          <h1>Fortnite — плашки раздевалки</h1>
-          <div className="sub">
-            Читает косметику аккаунта и собирает из неё сетку, коллажи, объявление и офферы.
+        <div className="brand">
+          <div className="mark">FN</div>
+          <div>
+            <h1>Fortnite — плашки раздевалки</h1>
+            <div className="sub">
+              Читает косметику аккаунта и собирает сетку, коллажи, объявление и офферы.
+            </div>
           </div>
         </div>
         <div className="row">
@@ -145,31 +179,43 @@ export default function Home() {
 
       {locker && (
         <>
-          <StatsStrip locker={locker} items={sorted} />
+          <StatsStrip locker={locker} items={sorted} arriving={arriving} />
 
-          <section className="card">
-            <div className="spread" style={{ marginBottom: 14 }}>
-              <h2 className="section-title" style={{ margin: 0 }}>
-                Предметы
-              </h2>
-              <span className="note">
-                {filtered.length === sorted.length
-                  ? `${sorted.length} шт.`
-                  : `${filtered.length} из ${sorted.length} — ${label}`}
-              </span>
-            </div>
+          {/*
+            Two columns, not a stack of seven cards. The grid is what the
+            seller keeps looking at, so it stays put on the left while the
+            right-hand column swaps between collage, text and offer — the old
+            layout put a long scroll between the items and the button that
+            publishes them.
+          */}
+          <div className="workspace">
+            <section>
+              <div className="filters-sticky">
+                <div className="card" style={{ margin: 0, padding: '14px 16px' }}>
+                  <div className="spread" style={{ alignItems: 'baseline', marginBottom: 10 }}>
+                    <h2 className="section-title" style={{ margin: 0 }}>
+                      Предметы
+                    </h2>
+                    <span className="note" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                      {filtered.length === sorted.length
+                        ? `${sorted.length} шт.`
+                        : `${filtered.length} из ${sorted.length} — ${label}`}
+                    </span>
+                  </div>
 
-            <Filters
-              items={sorted}
-              filter={filter}
-              onChange={(next) => {
-                setFilter(next);
-                setLimit(FIRST_PAGE);
-              }}
-            />
+                  <Filters
+                    items={sorted}
+                    filter={filter}
+                    onChange={(next) => {
+                      setFilter(next);
+                      setLimit(FIRST_PAGE);
+                    }}
+                  />
+                </div>
+              </div>
 
-            <div style={{ marginTop: 16 }}>
-              <ItemGrid items={filtered.slice(0, limit)} />
+              <ItemGrid items={filtered.slice(0, limit)} arriving={arriving} />
+
               {filtered.length > limit && (
                 <div className="row" style={{ marginTop: 14, justifyContent: 'center' }}>
                   <button className="btn secondary" onClick={() => setLimit(filtered.length)}>
@@ -177,37 +223,84 @@ export default function Home() {
                   </button>
                 </div>
               )}
+            </section>
+
+            <aside className="side">
+              <div className="tabs">
+                {tabs.map((entry) => (
+                  <button
+                    key={entry.id}
+                    data-active={tab === entry.id}
+                    onClick={() => setTab(entry.id)}
+                  >
+                    <span>{entry.label}</span>
+                    <span className="hint">{entry.hint}</span>
+                  </button>
+                ))}
+              </div>
+
+              {tab === 'collage' && (
+                <CollagePanel
+                  locker={locker}
+                  items={filtered}
+                  filterLabel={label}
+                  pages={pages}
+                  onPages={setPages}
+                />
+              )}
+              {tab === 'listing' && (
+                <ListingPanel
+                  locker={locker}
+                  items={sorted}
+                  title={title}
+                  description={description}
+                  onTitle={setTitle}
+                  onDescription={setDescription}
+                />
+              )}
+              {tab === 'offer' && (
+                <UploadPanel
+                  accountId={locker.accountId}
+                  displayName={locker.displayName}
+                  stats={listingStats}
+                  title={title}
+                  description={description}
+                  pages={pages}
+                  itemCount={sorted.length}
+                  onUploaded={() => setUploaded(true)}
+                />
+              )}
+              {tab === 'screenshot' && <ScreenshotRedactor />}
+            </aside>
+          </div>
+
+          <div className="stepbar">
+            <div className="inner">
+              <div className="steps-row">
+                {steps.map((step) => (
+                  <button
+                    key={step.n}
+                    className="step"
+                    data-done={step.done}
+                    onClick={step.go}
+                  >
+                    <span className="n">{step.n}</span>
+                    <span className="label">{step.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="row" style={{ marginLeft: 'auto' }}>
+                <span className="note" style={{ textAlign: 'right' }}>
+                  {pages.length
+                    ? `Коллаж готов: ${pages.length} стр.`
+                    : 'Осталось: собрать коллаж'}
+                </span>
+                <button className="btn" onClick={() => setTab('offer')}>
+                  К офферу
+                </button>
+              </div>
             </div>
-          </section>
-
-          <CollagePanel
-            locker={locker}
-            items={filtered}
-            filterLabel={label}
-            pages={pages}
-            onPages={setPages}
-          />
-
-          <ScreenshotRedactor />
-
-          <ListingPanel
-            locker={locker}
-            items={sorted}
-            title={title}
-            description={description}
-            onTitle={setTitle}
-            onDescription={setDescription}
-          />
-
-          <UploadPanel
-            accountId={locker.accountId}
-            displayName={locker.displayName}
-            stats={listingStats}
-            title={title}
-            description={description}
-            pages={pages}
-            itemCount={sorted.length}
-          />
+          </div>
         </>
       )}
     </main>

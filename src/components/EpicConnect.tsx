@@ -65,103 +65,172 @@ export function EpicConnect({ onLocker }: { onLocker: (locker: LockerResult) => 
     // `slow_down` if that is ignored.
     const wait = Math.max(5, issued.interval) * 1000;
 
-    while (!cancelled.current && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, wait));
-      if (cancelled.current) return;
+    // The countdown ticks every second so the bar moves visibly; polling stays
+    // on Epic's own interval.
+    const ticker = setInterval(() => {
       setSecondsLeft(Math.max(0, Math.round((deadline - Date.now()) / 1000)));
+    }, 1000);
 
-      try {
-        const response = await fetch('/api/epic/poll', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ deviceCode: issued.deviceCode, client: issued.client }),
-        });
-        const body = (await response.json()) as {
-          status?: string;
-          locker?: LockerResult;
-          error?: string;
-        };
+    try {
+      while (!cancelled.current && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+        if (cancelled.current) return;
 
-        if (!response.ok) throw new Error(body.error ?? 'Ошибка Epic');
-        if (body.status === 'pending') {
-          // The seller is still signing in. The next answer may be the locker,
-          // and reading one takes a while, so say so before it arrives.
-          continue;
-        }
-        if (body.status === 'expired') {
-          setError('Код истёк. Запросите новый.');
+        try {
+          const response = await fetch('/api/epic/poll', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ deviceCode: issued.deviceCode, client: issued.client }),
+          });
+          const body = (await response.json()) as {
+            status?: string;
+            locker?: LockerResult;
+            error?: string;
+          };
+
+          if (!response.ok) throw new Error(body.error ?? 'Ошибка Epic');
+          if (body.status === 'pending') {
+            // The seller is still signing in.
+            continue;
+          }
+          if (body.status === 'expired') {
+            setError('Код истёк. Запросите новый.');
+            setPhase('idle');
+            return;
+          }
+          if (body.status === 'ok' && body.locker) {
+            // The read already happened inside that poll; this phase covers the
+            // moment between the sign-in landing and the grid appearing.
+            setPhase('reading');
+            onLocker(body.locker);
+            setPhase('idle');
+            setCode(null);
+            return;
+          }
+        } catch (problem) {
+          setError(problem instanceof Error ? problem.message : 'Ошибка связи с Epic');
           setPhase('idle');
           return;
         }
-        if (body.status === 'ok' && body.locker) {
-          setPhase('reading');
-          onLocker(body.locker);
-          setPhase('idle');
-          setCode(null);
-          return;
-        }
-      } catch (problem) {
-        setError(problem instanceof Error ? problem.message : 'Ошибка связи с Epic');
-        setPhase('idle');
-        return;
       }
-    }
 
-    if (!cancelled.current) {
-      setError('Код истёк. Запросите новый.');
-      setPhase('idle');
+      if (!cancelled.current) {
+        setError('Код истёк. Запросите новый.');
+        setPhase('idle');
+      }
+    } finally {
+      clearInterval(ticker);
     }
   }, [onLocker]);
 
+  if (phase === 'reading') {
+    return (
+      <section className="card" style={{ textAlign: 'center', padding: '40px 22px' }}>
+        <div className="spinner" />
+        <div style={{ font: '650 16px/1.3 system-ui' }}>Вход подтверждён — читаем раздевалку</div>
+        <div className="note" style={{ marginTop: 4 }}>Это занимает несколько секунд</div>
+      </section>
+    );
+  }
+
+  if (phase === 'waiting' && code) {
+    const share = code.expiresIn > 0 ? secondsLeft / code.expiresIn : 0;
+    return (
+      <section className="card" style={{ paddingTop: 0 }}>
+        {/* The seller stares at this screen for up to ten minutes while nothing
+            of theirs happens here. The pulse says the poll is alive. */}
+        <div className="polling">
+          <span className="dot" />
+          <span className="dot" />
+          <span className="dot" />
+          <span>Ждём подтверждения от Epic — опрос каждые {Math.max(5, code.interval)} секунд</span>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0,320px) minmax(0,1fr)',
+            gap: 26,
+            alignItems: 'start',
+          }}
+        >
+          <div>
+            <div className="code-box">
+              {code.userCode.split('').map((character, index) => (
+                <b
+                  key={`${character}-${index}`}
+                  style={{ animationDelay: `${(index * 0.11).toFixed(2)}s` }}
+                >
+                  {character}
+                </b>
+              ))}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <div className="meter">
+                <i style={{ transform: `scaleX(${share.toFixed(3)})` }} />
+              </div>
+              <div
+                className="note"
+                style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}
+              >
+                <span>
+                  Код действует ещё {Math.floor(secondsLeft / 60)}:
+                  {String(secondsLeft % 60).padStart(2, '0')}
+                </span>
+                <button
+                  onClick={cancel}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: 'var(--accent)',
+                    font: '600 12px/1.4 system-ui',
+                  }}
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <ol className="steps">
+            <li>
+              Откройте{' '}
+              <a href={code.verificationUri} target="_blank" rel="noreferrer">
+                {code.verificationUri.replace('https://www.', '')}
+              </a>{' '}
+              и войдите в аккаунт, который продаёте.
+            </li>
+            <li>
+              Введите код <b>{code.userCode}</b> и подтвердите.
+            </li>
+            <li>Список подтянется сюда сам — вкладку не закрывайте.</li>
+          </ol>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="card">
-      <div className="spread">
-        <div>
-          <h2 className="section-title">Подключение аккаунта</h2>
-          <p className="note" style={{ margin: 0, maxWidth: 640 }}>
+      <div className="spread" style={{ alignItems: 'flex-start' }}>
+        <div style={{ maxWidth: 640 }}>
+          <h2 className="section-title" style={{ margin: '0 0 8px' }}>
+            Подключение аккаунта
+          </h2>
+          <p className="note" style={{ margin: 0 }}>
             Список предметов отдаёт только сам Epic и только владельцу аккаунта — по нику или ID
             раздевалку не посмотреть ни здесь, ни где-либо ещё. Вход происходит на сайте Epic:
             пароль сюда не попадает, а выданный токен удаляется сразу после чтения.
           </p>
         </div>
-        {phase === 'idle' && (
-          <button className="btn" onClick={start}>
-            Подключить Epic
-          </button>
-        )}
-        {phase === 'starting' && <span className="note">Запрашиваем код…</span>}
-        {phase === 'reading' && <span className="note">Читаем раздевалку…</span>}
-        {phase === 'waiting' && (
-          <button className="btn secondary" onClick={cancel}>
-            Отмена
-          </button>
-        )}
+        <button className="btn" onClick={start} disabled={phase === 'starting'}>
+          {phase === 'starting' ? 'Запрашиваем код…' : 'Подключить Epic'}
+        </button>
       </div>
 
-      {code && phase === 'waiting' && (
-        <div style={{ marginTop: 18 }}>
-          <div className="row" style={{ alignItems: 'flex-start', gap: 20 }}>
-            <div className="code-box">{code.userCode}</div>
-            <ol className="steps" style={{ flex: '1 1 320px' }}>
-              <li>
-                Откройте <a href={code.verificationUri} target="_blank" rel="noreferrer">{code.verificationUri.replace('https://www.', '')}</a>{' '}
-                и войдите в аккаунт, который продаёте.
-              </li>
-              <li>
-                Введите код <b>{code.userCode}</b> и подтвердите.
-              </li>
-              <li>Список подтянется сюда сам — вкладку не закрывайте.</li>
-            </ol>
-          </div>
-          <p className="note" style={{ marginBottom: 0 }}>
-            Код действует ещё {Math.floor(secondsLeft / 60)}:
-            {String(secondsLeft % 60).padStart(2, '0')}.
-          </p>
-        </div>
-      )}
-
       {error && (
-        <p className="error" style={{ marginBottom: 0 }}>
+        <p className="error" style={{ marginBottom: 0, marginTop: 14 }}>
           {error}
         </p>
       )}

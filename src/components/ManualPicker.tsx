@@ -1,7 +1,13 @@
 'use client';
 
 import { proxiedIcon } from '@/lib/fortnite/images';
-import { compareItems, rarityStyle, typeLabel, TYPE_ORDER } from '@/lib/fortnite/rarity';
+import {
+  compareItems,
+  needsDarkArtBacking,
+  rarityStyle,
+  typeLabel,
+  TYPE_ORDER,
+} from '@/lib/fortnite/rarity';
 import type { Cosmetic, LockerResult, OwnedItem } from '@/lib/fortnite/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -178,25 +184,28 @@ export function ManualPicker({ onLocker, onCancel }: Props) {
               key={item.id}
               className="tile"
               data-picked={on ? true : undefined}
+              data-art={needsDarkArtBacking(item.type) ? 'dark' : undefined}
               onClick={() => toggle(item)}
               style={
                 {
                   '--tile-from': style.from,
                   '--tile-to': style.to,
                   '--tile-accent': style.accent,
-                  textAlign: 'center',
                   cursor: 'pointer',
-                  opacity: on ? 1 : 0.55,
+                  opacity: on ? 1 : 0.62,
                 } as React.CSSProperties
               }
               title={`${item.name} — ${style.label}`}
             >
-              {item.art ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={proxiedIcon(item.id)} alt="" loading="lazy" decoding="async" />
-              ) : (
-                <div className="no-art">{item.name.slice(0, 2).toUpperCase()}</div>
-              )}
+              <div className="bar" />
+              <div className="art">
+                {item.art ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={proxiedIcon(item.id)} alt="" loading="lazy" decoding="async" />
+                ) : (
+                  <div className="no-art">{item.name.slice(0, 2).toUpperCase()}</div>
+                )}
+              </div>
               <div className="name">{item.name}</div>
               <div className="meta">{on ? '✓ есть' : 'нет'}</div>
             </button>

@@ -81,57 +81,101 @@ export function CollagePanel({ locker, items, filterLabel, pages, onPages }: Pro
       .then((blob) => download(page.filename, blob));
   }
 
+  const busy = progress !== null;
+
   return (
-    <section className="card">
-      <div className="spread">
-        <div>
-          <h2 className="section-title">Коллаж и выгрузка</h2>
-          <p className="note" style={{ margin: 0 }}>
-            {counted(items.length, 'предмет', 'предмета', 'предметов')} —{' '}
-            {counted(totalPages, 'страница', 'страницы', 'страниц')} по {ITEMS_PER_PAGE}{' '}
-            {plural(ITEMS_PER_PAGE, 'плашке', 'плашки', 'плашек')},
-            2560×1440
-            {groups.length > 1 &&
-              `, ${counted(groups.length, 'набор', 'набора', 'наборов')}`}
-            .
-          </p>
+    <div className="pane">
+      <p className="note" style={{ margin: '0 0 12px' }}>
+        {counted(items.length, 'предмет', 'предмета', 'предметов')} —{' '}
+        {counted(totalPages, 'страница', 'страницы', 'страниц')} по {ITEMS_PER_PAGE}{' '}
+        {plural(ITEMS_PER_PAGE, 'плашке', 'плашки', 'плашек')}, 2560×1440
+        {groups.length > 1 && `, ${counted(groups.length, 'набор', 'набора', 'наборов')}`}.
+      </p>
+
+      <div className="row" style={{ marginBottom: 12 }}>
+        <select value={mode} onChange={(event) => setMode(event.target.value as GroupMode)}>
+          {(Object.keys(GROUP_LABELS) as GroupMode[]).map((key) => (
+            <option key={key} value={key}>
+              {GROUP_LABELS[key]}
+            </option>
+          ))}
+        </select>
+        <label className="note" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input
+            type="checkbox"
+            checked={hideName}
+            onChange={(event) => setHideName(event.target.checked)}
+          />
+          скрыть ник
+        </label>
+      </div>
+
+      <div className="row">
+        <button className="btn secondary" onClick={renderCard} disabled={busy || !items.length}>
+          Карточка профиля
+        </button>
+        <button
+          className="btn"
+          onClick={render}
+          disabled={busy || !items.length}
+          data-busy={busy ? true : undefined}
+          style={{ flex: '1 1 150px' }}
+        >
+          {progress ? `Рендер ${progress.done}/${progress.total}…` : 'Собрать коллаж'}
+        </button>
+      </div>
+
+      {progress && (
+        <div className="meter" data-sweep="true" style={{ marginTop: 12 }}>
+          <i
+            style={{
+              transform: `scaleX(${(progress.done / Math.max(1, progress.total)).toFixed(3)})`,
+              transition: 'transform 320ms cubic-bezier(.2,.7,.3,1)',
+            }}
+          />
         </div>
-        <div className="row">
-          <select value={mode} onChange={(event) => setMode(event.target.value as GroupMode)}>
-            {(Object.keys(GROUP_LABELS) as GroupMode[]).map((key) => (
-              <option key={key} value={key}>
-                {GROUP_LABELS[key]}
-              </option>
-            ))}
-          </select>
-          <label className="note" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input
-              type="checkbox"
-              checked={hideName}
-              onChange={(event) => setHideName(event.target.checked)}
-            />
-            скрыть ник
-          </label>
-          <button
-            className="btn secondary"
-            onClick={renderCard}
-            disabled={progress !== null || !items.length}
-          >
-            Карточка профиля
-          </button>
-          <button className="btn" onClick={render} disabled={progress !== null || !items.length}>
-            {progress ? `Рендер ${progress.done}/${progress.total}…` : 'Собрать коллаж'}
-          </button>
+      )}
+
+      {error && <p className="error" style={{ marginTop: 12 }}>{error}</p>}
+
+      {/*
+        The one deliberately dark block on a light page. These are the pictures
+        that go onto the marketplace, and they are rendered on dark because
+        Fortnite art is cut for it — so the frame says as much rather than
+        letting them read as a styling mistake.
+      */}
+      <div className="render-frame">
+        <header>
+          <b>Рендер объявления</b>
+          <span>тёмный фон — так требует выдача</span>
+        </header>
+        <div className="previews">
+          {pages.map((page) => (
+            <figure key={page.filename}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={page.dataUrl} alt={page.filename} />
+              <figcaption>
+                <span>{counted(page.itemCount, 'плашка', 'плашки', 'плашек')}</span>
+                <button className="btn secondary small" onClick={() => downloadPage(page)}>
+                  Скачать
+                </button>
+              </figcaption>
+            </figure>
+          ))}
+          {busy && <div className="pending">собирается…</div>}
+          {!pages.length && !busy && (
+            <div className="empty">Коллаж ещё не собран. Страницы появятся здесь по мере рендера.</div>
+          )}
         </div>
       </div>
 
-      <div className="row" style={{ marginTop: 14 }}>
+      <div className="row" style={{ marginTop: 12 }}>
         <button
           className="btn secondary small"
           onClick={() => download('fortnite-locker.csv', toCsv(items))}
           disabled={!items.length}
         >
-          CSV для таблицы
+          CSV
         </button>
         <button
           className="btn secondary small"
@@ -153,25 +197,6 @@ export function CollagePanel({ locker, items, filterLabel, pages, onPages }: Pro
           </button>
         )}
       </div>
-
-      {error && <p className="error">{error}</p>}
-
-      {pages.length > 0 && (
-        <div className="previews">
-          {pages.map((page) => (
-            <figure key={page.filename}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={page.dataUrl} alt={page.filename} />
-              <figcaption>
-                <span>{counted(page.itemCount, 'плашка', 'плашки', 'плашек')}</span>
-                <button className="btn secondary small" onClick={() => downloadPage(page)}>
-                  Скачать
-                </button>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      )}
-    </section>
+    </div>
   );
 }

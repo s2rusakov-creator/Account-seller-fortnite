@@ -2,6 +2,7 @@
 
 import { breakdown, headlineItems } from '@/lib/listing';
 import type { AccountInfo, LockerResult, OwnedItem } from '@/lib/fortnite/types';
+import { useEffect, useState } from 'react';
 
 /** How Epic names the external accounts, in the words a listing uses. */
 const PLATFORM_LABELS: Record<string, string> = {
@@ -14,6 +15,55 @@ const PLATFORM_LABELS: Record<string, string> = {
   apple: 'Apple',
   twitch: 'Twitch',
 };
+
+/**
+ * Counts up to the real figure once, when the locker lands.
+ *
+ * This is the payoff of the whole flow — a moment ago the screen held an
+ * eight-character code, now it holds the account. Numbers that snap into
+ * place read as a page swap; numbers that run up read as an arrival.
+ *
+ * Fourteen frames at 50 ms — 700 ms total, matching the tile cascade. Anything
+ * longer and a seller reading the figures is waiting on them.
+ */
+function useCountUp(active: boolean): number {
+  const [progress, setProgress] = useState(active ? 0 : 1);
+
+  useEffect(() => {
+    if (!active) {
+      setProgress(1);
+      return;
+    }
+    let frame = 0;
+    setProgress(0);
+    const timer = setInterval(() => {
+      frame += 1;
+      setProgress(Math.min(1, frame / 14));
+      if (frame >= 14) clearInterval(timer);
+    }, 50);
+    return () => clearInterval(timer);
+  }, [active]);
+
+  return progress;
+}
+
+function Stat({ value, label, index, progress }: {
+  value: number | string;
+  label: string;
+  index: number;
+  progress: number;
+}) {
+  const shown =
+    typeof value === 'number'
+      ? Math.round(value * progress).toLocaleString('ru-RU')
+      : value;
+  return (
+    <div className="stat" style={{ animationDelay: `${index * 45}ms` }}>
+      <div className="value">{shown}</div>
+      <div className="label">{label}</div>
+    </div>
+  );
+}
 
 /**
  * The account's own state, which for a Fortnite listing is often the first
@@ -52,9 +102,9 @@ function AccountFacts({ account }: { account: AccountInfo }) {
   if (account.country) facts.push({ text: `Регион: ${account.country}` });
 
   return (
-    <p className="note" style={{ marginBottom: 0, marginTop: 14 }}>
+    <p className="facts">
       {facts.map((fact, index) => (
-        <span key={fact.text} style={fact.warn ? { color: 'var(--warn)' } : undefined}>
+        <span key={fact.text} className={fact.warn ? 'warn' : undefined}>
           {index > 0 && ' · '}
           {fact.text}
         </span>
@@ -63,54 +113,62 @@ function AccountFacts({ account }: { account: AccountInfo }) {
   );
 }
 
-function Stat({ value, label }: { value: string | number; label: string }) {
-  return (
-    <div className="stat">
-      <div className="value">{typeof value === 'number' ? value.toLocaleString('ru-RU') : value}</div>
-      <div className="label">{label}</div>
-    </div>
-  );
-}
-
-export function StatsStrip({ locker, items }: { locker: LockerResult; items: OwnedItem[] }) {
+export function StatsStrip({
+  locker,
+  items,
+  arriving = false,
+}: {
+  locker: LockerResult;
+  items: OwnedItem[];
+  arriving?: boolean;
+}) {
+  const progress = useCountUp(arriving);
   const { ogCount } = breakdown(items);
   const outfits = items.filter((item) => item.type === 'outfit').length;
   const headline = headlineItems(items);
   const stats = locker.stats;
 
+  const cells: { value: number; label: string }[] = [
+    { value: items.length, label: 'предметов всего' },
+    { value: outfits, label: 'скинов' },
+    { value: ogCount, label: 'из 1–4 сезонов' },
+  ];
+  if (stats.vbucks !== undefined) cells.push({ value: stats.vbucks, label: 'В-Баксов' });
+  if (stats.accountLevel !== undefined) cells.push({ value: stats.accountLevel, label: 'уровень аккаунта' });
+  if (stats.seasonLevel !== undefined) cells.push({ value: stats.seasonLevel, label: 'уровень БП' });
+  if (stats.pastSeasons.length) cells.push({ value: stats.pastSeasons.length, label: 'сыграно сезонов' });
+  if (stats.lifetimeWins !== undefined) cells.push({ value: stats.lifetimeWins, label: 'побед за всё время' });
+
   return (
     <section className="card">
-      <div className="spread" style={{ marginBottom: 14 }}>
+      <div className="spread" style={{ alignItems: 'baseline', marginBottom: 12 }}>
         <h2 className="section-title" style={{ margin: 0 }}>
           {locker.displayName}
         </h2>
-        <span className="note">
-          прочитано {new Date(locker.readAt).toLocaleString('ru-RU')}
-        </span>
+        <span className="note">прочитано {new Date(locker.readAt).toLocaleString('ru-RU')}</span>
       </div>
 
       <div className="stats">
-        <Stat value={items.length} label="предметов всего" />
-        <Stat value={outfits} label="скинов" />
-        <Stat value={ogCount} label="из 1–4 сезонов" />
-        {stats.vbucks !== undefined && <Stat value={stats.vbucks} label="В-Баксов" />}
-        {stats.accountLevel !== undefined && <Stat value={stats.accountLevel} label="уровень аккаунта" />}
-        {stats.seasonLevel !== undefined && <Stat value={stats.seasonLevel} label="уровень БП" />}
-        {stats.pastSeasons.length > 0 && <Stat value={stats.pastSeasons.length} label="сыграно сезонов" />}
-        {stats.lifetimeWins !== undefined && <Stat value={stats.lifetimeWins} label="побед за всё время" />}
+        {cells.map((cell, index) => (
+          <Stat
+            key={cell.label}
+            value={cell.value}
+            label={cell.label}
+            index={index}
+            progress={progress}
+          />
+        ))}
       </div>
 
       {locker.account && <AccountFacts account={locker.account} />}
 
       {locker.manual && (
-        <p className="note" style={{ marginBottom: 0, marginTop: 12 }}>
-          Список отмечен вручную — уровень, В-Баксы и привязки Epic не сообщал.
-        </p>
+        <p className="facts">Список отмечен вручную — уровень, В-Баксы и привязки Epic не сообщал.</p>
       )}
 
       {headline.length > 0 && (
-        <p className="note" style={{ marginBottom: 0, marginTop: 14 }}>
-          <b style={{ color: 'var(--warn)' }}>Редкое на аккаунте:</b> {headline.join(', ')}
+        <p className="headline">
+          <b>Редкое на аккаунте:</b> {headline.join(', ')}
         </p>
       )}
     </section>

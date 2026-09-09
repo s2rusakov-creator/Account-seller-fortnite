@@ -160,12 +160,10 @@ export function ScreenshotRedactor() {
   }
 
   return (
-    <section className="card">
-      <div className="spread" style={{ marginBottom: 12 }}>
+    <div className="pane">
+      <div style={{ marginBottom: 12 }}>
         <div>
-          <h2 className="section-title" style={{ margin: 0 }}>
-            Скриншот из игры
-          </h2>
+          <h3 style={{ font: '650 15px/1.2 system-ui', margin: 0 }}>Скриншот из игры</h3>
           <p className="note" style={{ margin: '4px 0 0' }}>
             Закройте ник и почту — по ним аккаунт находят и пробуют вернуть после продажи.
             Перетащите прямоугольники мышью.
@@ -215,6 +213,6 @@ export function ScreenshotRedactor() {
           </div>
         </>
       )}
-    </section>
+    </div>
   );
 }

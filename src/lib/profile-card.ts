@@ -1,5 +1,5 @@
 import { featuredUrl, iconUrl } from '@/lib/fortnite/images';
-import { rarityStyle } from '@/lib/fortnite/rarity';
+import { renderRarityStyle } from '@/lib/fortnite/rarity';
 import type { LockerResult, OwnedItem } from '@/lib/fortnite/types';
 import { breakdown, headlineItems } from '@/lib/listing';
 import { loadImage, type CollagePage } from '@/lib/collage';
@@ -79,7 +79,7 @@ function panel(
 export async function renderProfileCard(input: ProfileCardInput): Promise<CollagePage> {
   const { locker, items, hideName } = input;
   const hero = heroItem(items);
-  const accent = rarityStyle(hero?.rarity ?? 'icon').accent;
+  const accent = renderRarityStyle(hero?.rarity ?? 'icon').accent;
   const { ogCount } = breakdown(items);
 
   const canvas = document.createElement('canvas');
@@ -89,7 +89,7 @@ export async function renderProfileCard(input: ProfileCardInput): Promise<Collag
   if (!ctx) throw new Error('Canvas недоступен в этом браузере.');
 
   const backdrop = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  backdrop.addColorStop(0, rarityStyle(hero?.rarity ?? 'icon').from);
+  backdrop.addColorStop(0, renderRarityStyle(hero?.rarity ?? 'icon').from);
   backdrop.addColorStop(1, '#05060d');
   ctx.fillStyle = backdrop;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);

@@ -83,18 +83,39 @@ function index(items: Cosmetic[]): Catalog {
   return { items, byId, fetchedAt: Date.now() };
 }
 
+/**
+ * How long to wait for the catalogue before giving up on it.
+ *
+ * A timeout, not a nicety. Their CDN does not always refuse — it accepts the
+ * connection and then stalls, and an un-aborted fetch waits on that forever:
+ * the first account read of the day simply never returns, and the snapshot
+ * fallback below never gets a chance to run because nothing ever threw. Seen
+ * in development, with the request never even reaching the server log.
+ *
+ * 25 seconds is well past a healthy download of 16.5 MB and well short of a
+ * serverless function's own ceiling.
+ */
+const DOWNLOAD_TIMEOUT_MS = 25_000;
+
 async function download(): Promise<Catalog> {
-  const response = await fetch(`${SOURCE}?language=en`, {
-    headers: { accept: 'application/json' },
-    // Next would try to store 16.5 MB in its own fetch cache otherwise, which
-    // exceeds the 2 MB entry limit and logs a warning on every cold start.
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error(`fortnite-api.com answered ${response.status}`);
-  const body = (await response.json()) as { data?: RawCosmetic[] };
-  const items = normalize(body.data ?? []);
-  if (items.length < 1000) throw new Error(`catalogue looks truncated: ${items.length} items`);
-  return index(items);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${SOURCE}?language=en`, {
+      headers: { accept: 'application/json' },
+      // Next would try to store 16.5 MB in its own fetch cache otherwise, which
+      // exceeds the 2 MB entry limit and logs a warning on every cold start.
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`fortnite-api.com answered ${response.status}`);
+    const body = (await response.json()) as { data?: RawCosmetic[] };
+    const items = normalize(body.data ?? []);
+    if (items.length < 1000) throw new Error(`catalogue looks truncated: ${items.length} items`);
+    return index(items);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**

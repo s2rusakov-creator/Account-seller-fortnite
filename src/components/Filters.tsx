@@ -119,10 +119,13 @@ export function Filters({ items, filter, onChange }: Props) {
               className="chip"
               data-active={filter.rarity === rarity}
               onClick={() => set({ rarity: filter.rarity === rarity ? null : rarity })}
+              // Selected: the rarity's own colour, filled. Unselected: the same
+              // colour as an outline, so sixteen categories stay tellable apart
+              // without sixteen filled chips shouting at once.
               style={
                 filter.rarity === rarity
-                  ? { background: style.accent, borderColor: style.accent, color: '#06131c' }
-                  : { borderColor: style.accent, color: style.accent }
+                  ? { background: style.accent, borderColor: style.accent, color: '#fff' }
+                  : { borderColor: style.accent, color: style.accent, background: 'var(--surface)' }
               }
             >
               {style.label}

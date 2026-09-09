@@ -1,6 +1,6 @@
 import { iconUrl, proxied } from '@/lib/fortnite/images';
 import { notableName } from '@/lib/fortnite/notable';
-import { rarityStyle, typeLabel } from '@/lib/fortnite/rarity';
+import { renderRarityStyle, typeLabel } from '@/lib/fortnite/rarity';
 import type { OwnedItem } from '@/lib/fortnite/types';
 
 /**
@@ -215,7 +215,9 @@ export async function renderCollage(
       const row = Math.floor(index / COLS);
       const x = PAD + col * CELL_W;
       const y = HEADER + row * CELL_H;
-      const style = rarityStyle(item.rarity);
+      // The dark palette, not the interface one: this picture goes onto a
+      // marketplace, where a pale collage loses to the listings beside it.
+      const style = renderRarityStyle(item.rarity);
 
       const tile = ctx.createLinearGradient(x - 8, y - 8, x - 8, y + CELL_H - 22);
       tile.addColorStop(0, style.from);

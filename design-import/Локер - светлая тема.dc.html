@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<style>
+  body{margin:0;background:#eef0f5;color:#14161d;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  *{box-sizing:border-box}
+  a{color:#0b5fd0;text-decoration:none}
+  a:hover{color:#083f8c;text-decoration:underline}
+  button{font:inherit;cursor:pointer}
+  button:disabled{cursor:not-allowed}
+  input,select,textarea{font:inherit}
+  @keyframes tileIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+  @keyframes ringPulse{0%{opacity:0;transform:scale(.9)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.06)}}
+  @keyframes panelIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes statIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+  @keyframes pageIn{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
+  @keyframes popIn{0%{opacity:0;transform:scale(.8)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}18%{transform:translateX(-6px)}36%{transform:translateX(5px)}54%{transform:translateX(-3px)}78%{transform:translateX(2px)}}
+  @keyframes digitBreath{0%,100%{opacity:.55;transform:translateY(0)}50%{opacity:1;transform:translateY(-1px)}}
+  @keyframes dotPulse{0%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1)}100%{opacity:.25;transform:scale(.7)}}
+  @keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes ghost{0%,100%{opacity:.35}50%{opacity:.7}}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:radial-gradient(1100px 520px at 50% -260px,#ffffff 0%,#eef0f5 70%)">
+<div style="max-width:1400px;margin:0 auto;padding:22px 20px 96px">
+
+  <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(160deg,#0b5fd0,#062f6a);display:grid;place-items:center;color:#fff;font:800 15px/1 system-ui">FN</div>
+      <div>
+        <h1 style="font:700 20px/1.2 system-ui;margin:0;letter-spacing:-.3px">Fortnite — плашки раздевалки</h1>
+        <div style="font:13px/1.4 system-ui;color:#5a6072">Читает косметику аккаунта и собирает сетку, коллажи, объявление и офферы.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button style="background:#fff;color:#14161d;border:1px solid #dee2ea;border-radius:8px;padding:7px 12px;font:600 13px/1 system-ui;transition:transform 140ms cubic-bezier(.2,.7,.3,1),border-color 140ms" style-hover="border-color:#0b5fd0" style-active="transform:scale(.97)">Инструкция</button>
+      <button onClick="{{ reset }}" style="background:#fff;color:#14161d;border:1px solid #dee2ea;border-radius:8px;padding:7px 12px;font:600 13px/1 system-ui;transition:transform 140ms cubic-bezier(.2,.7,.3,1),border-color 140ms" style-hover="border-color:#0b5fd0" style-active="transform:scale(.97)">Другой аккаунт</button>
+    </div>
+  </header>
+
+  <sc-if value="{{ isConnect }}" hint-placeholder-val="{{ true }}">
+  <section data-screen-label="Подключение Epic" style="background:#fff;border:1px solid #dee2ea;border-radius:14px;padding:22px;box-shadow:0 1px 2px rgba(20,22,29,.04);animation:panelIn 300ms cubic-bezier(.2,.7,.3,1) both">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap">
+      <div style="max-width:640px">
+        <h2 style="font:650 17px/1.3 system-ui;margin:0 0 8px">Подключение аккаунта</h2>
+        <p style="font:14px/1.55 system-ui;color:#5a6072;margin:0">Список предметов отдаёт только сам Epic и только владельцу аккаунта — по нику или ID раздевалку не посмотреть ни здесь, ни где-либо ещё. Вход происходит на сайте Epic: пароль сюда не попадает, а выданный токен удаляется сразу после чтения.</p>
+      </div>
+      <button onClick="{{ connect }}" style="background:#0b5fd0;color:#fff;border:none;border-radius:10px;padding:12px 20px;font:650 15px/1 system-ui;box-shadow:0 1px 2px rgba(11,95,208,.4);transition:transform 140ms cubic-bezier(.2,.7,.3,1),background 140ms" style-hover="background:#0a51b3" style-active="transform:scale(.97)">Подключить Epic</button>
+    </div>
+    <p style="font:13px/1.6 system-ui;color:#5a6072;margin:18px 0 0;padding-top:16px;border-top:1px solid #eef0f5">
+      <button onClick="{{ manual }}" style="background:#fff;color:#14161d;border:1px solid #dee2ea;border-radius:8px;padding:6px 11px;font:600 13px/1 system-ui;transition:transform 140ms" style-active="transform:scale(.97)">Отметить вручную</button>
+      — если входить в Epic не хочется: список собирается по каталогу, без уровня и В-Баксов.
+    </p>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ isWaiting }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="Ожидание кода Epic" style="background:#fff;border:1px solid #dee2ea;border-radius:14px;padding:0;overflow:hidden;box-shadow:0 1px 2px rgba(20,22,29,.04);animation:panelIn 300ms cubic-bezier(.2,.7,.3,1) both">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 22px;background:#e6effc;border-bottom:1px solid #cfe0f8">
+      <span style="width:8px;height:8px;border-radius:50%;background:#0b5fd0;animation:dotPulse 1.4s ease-in-out infinite"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:#0b5fd0;animation:dotPulse 1.4s ease-in-out .2s infinite"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:#0b5fd0;animation:dotPulse 1.4s ease-in-out .4s infinite"></span>
+      <span style="font:600 13px/1 system-ui;color:#083f8c;margin-left:4px">Ждём подтверждения от Epic — опрос каждые 5 секунд</span>
+    </div>
+    <div style="display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:26px;padding:24px 22px">
+      <div>
+        <div style="display:flex;gap:6px;justify-content:center;background:#eef0f5;border:1px dashed #9dbdec;border-radius:12px;padding:18px 14px">
+          <sc-for list="{{ digits }}" as="d" hint-placeholder-count="8">
+            <span style="font:700 32px/1 ui-monospace,Consolas,monospace;color:#14161d;animation:digitBreath 2.6s ease-in-out {{ d.delay }} infinite">{{ d.ch }}</span>
+          </sc-for>
+        </div>
+        <div style="margin-top:12px">
+          <div style="height:6px;border-radius:99px;background:#eef0f5;overflow:hidden">
+            <div style="height:100%;background:#0b5fd0;transform-origin:left;transform:{{ timerScale }};transition:transform 1s linear"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font:12px/1.4 system-ui;color:#5a6072;margin-top:6px">
+            <span>Код действует ещё {{ timerText }}</span>
+            <button onClick="{{ reset }}" style="background:none;border:none;padding:0;color:#0b5fd0;font:600 12px/1.4 system-ui">Отмена</button>
+          </div>
+        </div>
+      </div>
+      <ol style="margin:0;padding-left:22px;font:14px/1.9 system-ui;color:#5a6072">
+        <li>Откройте <a href="#">epicgames.com/activate</a> и войдите в аккаунт, который продаёте.</li>
+        <li>Введите код <b style="color:#14161d">{{ code }}</b> и подтвердите.</li>
+        <li>Список подтянется сюда сам — вкладку не закрывайте.</li>
+      </ol>
+    </div>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ isReading }}" hint-placeholder-val="{{ false }}">
+  <section style="background:#fff;border:1px solid #dee2ea;border-radius:14px;padding:40px 22px;text-align:center;box-shadow:0 1px 2px rgba(20,22,29,.04)">
+    <div style="width:26px;height:26px;margin:0 auto 14px;border-radius:50%;border:3px solid #cfe0f8;border-top-color:#0b5fd0;animation:spin 700ms linear infinite"></div>
+    <div style="font:650 16px/1.3 system-ui">Вход подтверждён — читаем раздевалку</div>
+    <div style="font:13px/1.5 system-ui;color:#5a6072;margin-top:4px">Это занимает несколько секунд</div>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Воркспейс">
+
+    <section style="background:#fff;border:1px solid #dee2ea;border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(20,22,29,.04);animation:panelIn 320ms cubic-bezier(.2,.7,.3,1) both">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <h2 style="font:650 17px/1.2 system-ui;margin:0">{{ displayName }}</h2>
+        <span style="font:12.5px/1.4 system-ui;color:#5a6072">прочитано 09.09.2026, 15:07</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(124px,1fr));gap:8px">
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="7">
+          <div style="background:#f7f8fb;border:1px solid #e6e9f0;border-radius:10px;padding:9px 11px;animation:statIn 300ms cubic-bezier(.2,.7,.3,1) {{ s.delay }} both">
+            <div style="font:700 21px/1.15 system-ui;letter-spacing:-.5px;font-variant-numeric:tabular-nums">{{ s.value }}</div>
+            <div style="font:11.5px/1.3 system-ui;color:#5a6072;margin-top:2px">{{ s.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <p style="font:13px/1.6 system-ui;color:#5a6072;margin:14px 0 0;padding-top:12px;border-top:1px solid #eef0f5">
+        Привязки: PlayStation, Xbox, Steam · Почта подтверждена · <span style="color:#8a5a00;font-weight:600">2FA включена — отключите перед передачей</span> · Ник можно сменить · Регион: RU
+      </p>
+      <p style="font:13px/1.6 system-ui;margin:10px 0 0;padding:9px 12px;background:#fff8e6;border:1px solid #f0dfae;border-radius:9px;color:#5a4200">
+        <b style="color:#3d2c00">Редкое на аккаунте:</b> {{ headline }}
+      </p>
+    </section>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,430px);gap:16px;margin-top:16px;align-items:start">
+
+      <section style="min-width:0">
+        <div style="position:sticky;top:0;z-index:5;background:#eef0f5;padding-bottom:10px">
+          <div style="background:#fff;border:1px solid #dee2ea;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(20,22,29,.04)">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+              <h2 style="font:650 17px/1.2 system-ui;margin:0">Предметы</h2>
+              <span style="font:12.5px/1.4 system-ui;color:#5a6072;font-variant-numeric:tabular-nums">{{ countText }}</span>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+              <sc-for list="{{ typeChips }}" as="c" hint-placeholder-count="9">
+                <button onClick="{{ c.pick }}" style="border-radius:999px;padding:5px 12px;font:13px/1.3 system-ui;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.ink }};font-weight:{{ c.weight }};transition:transform 140ms cubic-bezier(.2,.7,.3,1),background 140ms,border-color 140ms" style-hover="border-color:#9dbdec" style-active="transform:scale(.95)">{{ c.label }}<span style="opacity:.6;margin-left:5px;font-variant-numeric:tabular-nums">{{ c.count }}</span></button>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+              <sc-for list="{{ rarityChips }}" as="c" hint-placeholder-count="10">
+                <button onClick="{{ c.pick }}" style="border-radius:999px;padding:5px 12px;font:13px/1.3 system-ui;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.ink }};font-weight:{{ c.weight }};transition:transform 140ms cubic-bezier(.2,.7,.3,1),background 140ms" style-active="transform:scale(.95)">{{ c.label }}<span style="opacity:.65;margin-left:5px;font-variant-numeric:tabular-nums">{{ c.count }}</span></button>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="search" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Поиск по названию или набору" style="flex:1 1 220px;min-width:0;background:#f7f8fb;border:1px solid #dee2ea;border-radius:9px;color:#14161d;padding:9px 12px" style-focus="outline:2px solid #9dbdec;outline-offset:1px;background:#fff" />
+              <select style="background:#f7f8fb;border:1px solid #dee2ea;border-radius:9px;color:#14161d;padding:9px 10px">
+                <option>Все сезоны</option>
+                <option>Сезон 1</option>
+                <option>Сезон 2</option>
+                <option>Сезон 3</option>
+                <option>Сезон 4</option>
+              </select>
+              <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ resetFilter }}" style="background:#fff;border:1px solid #dee2ea;border-radius:8px;padding:8px 11px;font:600 13px/1 system-ui;transition:transform 140ms" style-active="transform:scale(.97)">Сбросить</button>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax({{ tile }}px,1fr));gap:10px;margin-top:2px">
+          <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="42">
+            <article onClick="{{ t.pick }}" title="{{ t.title }}" style="position:relative;border-radius:12px;border:1px solid {{ t.border }};background:linear-gradient(180deg,{{ t.from }},{{ t.to }});padding:8px;text-align:center;overflow:hidden;content-visibility:{{ t.cv }};contain-intrinsic-size:auto 196px;transition:transform 150ms cubic-bezier(.2,.7,.3,1);animation:{{ t.anim }};box-shadow:{{ t.shadow }}" style-hover="transform:translateY(-3px) scale(1.03);z-index:2" style-active="transform:translateY(-1px) scale(.99)">
+              <div style="height:3px;border-radius:99px;background:{{ t.bar }};margin:0 0 6px"></div>
+              <div style="width:100%;aspect-ratio:1;display:grid;place-items:center;border-radius:8px;background:{{ t.art }};font:700 22px/1 ui-monospace,Consolas,monospace;color:{{ t.dim }}">{{ t.initials }}</div>
+              <div style="font:600 12.5px/1.25 system-ui;margin-top:6px;color:{{ t.ink }};min-height:31px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ t.name }}</div>
+              <div style="font:11px/1.3 system-ui;color:{{ t.dim }};margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.meta }}</div>
+              <sc-if value="{{ t.notable }}" hint-placeholder-val="{{ false }}">
+                <div style="font:800 10px/1 system-ui;letter-spacing:.6px;color:#ffd447;margin-top:5px">★ РЕДКОЕ</div>
+              </sc-if>
+              <sc-if value="{{ t.ring }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;border-radius:12px;border:2px solid #ffd447;pointer-events:none;animation:ringPulse 460ms cubic-bezier(.2,.7,.3,1) {{ t.ringDelay }} both"></div>
+              </sc-if>
+              <sc-if value="{{ t.picked }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;border-radius:12px;border:2px solid #0b5fd0;pointer-events:none"></div>
+              </sc-if>
+            </article>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;justify-content:center;margin-top:14px">
+            <button onClick="{{ showAll }}" style="background:#fff;border:1px solid #dee2ea;border-radius:10px;padding:10px 18px;font:600 14px/1 system-ui;transition:transform 140ms,border-color 140ms" style-hover="border-color:#0b5fd0" style-active="transform:scale(.98)">Показать остальные {{ moreCount }}</button>
+          </div>
+        </sc-if>
+      </section>
+
+      <aside style="position:sticky;top:10px;min-width:0">
+        <div style="background:#fff;border:1px solid #dee2ea;border-radius:14px;box-shadow:0 1px 2px rgba(20,22,29,.04);overflow:hidden">
+          <div style="display:flex;gap:2px;padding:8px 8px 0;background:#f7f8fb;border-bottom:1px solid #dee2ea">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.pick }}" style="flex:1;min-width:0;border:1px solid {{ t.border }};border-bottom:none;border-radius:9px 9px 0 0;background:{{ t.bg }};color:{{ t.ink }};padding:9px 8px;font:600 13px/1.2 system-ui;transition:background 140ms,color 140ms">
+                <span style="display:block">{{ t.label }}</span>
+                <span style="display:block;font:11px/1.3 system-ui;color:{{ t.dim }};margin-top:2px">{{ t.hint }}</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ tabCollage }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:16px">
+            <p style="font:13px/1.55 system-ui;color:#5a6072;margin:0 0 12px">{{ collageNote }}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+              <select style="background:#f7f8fb;border:1px solid #dee2ea;border-radius:9px;padding:8px 10px">
+                <option>Одним набором</option>
+                <option>По типам</option>
+                <option>По редкости</option>
+              </select>
+              <label style="display:flex;align-items:center;gap:6px;font:13px/1 system-ui;color:#5a6072"><input type="checkbox" checked="{{ true }}" /> скрыть ник</label>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button style="background:#fff;border:1px solid #dee2ea;border-radius:9px;padding:9px 13px;font:600 13px/1 system-ui;transition:transform 140ms,border-color 140ms" style-hover="border-color:#0b5fd0" style-active="transform:scale(.97)">Карточка профиля</button>
+              <button onClick="{{ renderCollage }}" disabled="{{ rendering }}" style="flex:1 1 150px;background:{{ renderBtnBg }};color:#fff;border:none;border-radius:9px;padding:10px 14px;font:650 14px/1 system-ui;position:relative;overflow:hidden;transition:transform 140ms" style-active="transform:scale(.98)">{{ renderBtnLabel }}</button>
+            </div>
+
+            <sc-if value="{{ rendering }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:12px;height:6px;border-radius:99px;background:#eef0f5;overflow:hidden;position:relative">
+                <div style="height:100%;background:#0b5fd0;transform-origin:left;transform:{{ renderScale }};transition:transform 320ms cubic-bezier(.2,.7,.3,1)"></div>
+                <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:sweep 900ms linear infinite"></div>
+              </div>
+            </sc-if>
+
+            <div style="margin-top:14px;border-radius:12px;overflow:hidden;border:1px solid #cfd5e2;background:#0e1018">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;background:#f7f8fb;border-bottom:1px solid #dee2ea">
+                <span style="font:600 12px/1.3 system-ui;color:#14161d">Рендер объявления</span>
+                <span style="font:11.5px/1.3 system-ui;color:#5a6072">тёмный фон — так требует выдача</span>
+              </div>
+              <div style="padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+                <sc-for list="{{ pages }}" as="p" hint-placeholder-count="0">
+                  <figure style="margin:0;animation:pageIn 380ms cubic-bezier(.2,.7,.3,1) both">
+                    <div style="aspect-ratio:16/9;border-radius:8px;border:1px solid #2a2f45;background:#12141f;padding:5px;display:grid;grid-template-columns:repeat(8,1fr);grid-auto-rows:1fr;gap:3px;overflow:hidden">
+                      <sc-for list="{{ p.cells }}" as="c" hint-placeholder-count="24">
+                        <div style="border-radius:2px;border:1px solid {{ c.border }};background:{{ c.bg }}"></div>
+                      </sc-for>
+                    </div>
+                    <figcaption style="display:flex;justify-content:space-between;align-items:center;gap:8px;font:11.5px/1.4 system-ui;color:#a6adc4;margin-top:5px">
+                      <span>{{ p.label }}</span>
+                      <button style="background:#1c2033;border:1px solid #2f3550;color:#e8ebf5;border-radius:6px;padding:3px 7px;font:600 11px/1 system-ui;transition:transform 140ms" style-active="transform:scale(.95)">Скачать</button>
+                    </figcaption>
+                  </figure>
+                </sc-for>
+                <sc-if value="{{ rendering }}" hint-placeholder-val="{{ false }}">
+                  <div style="aspect-ratio:16/9;border-radius:8px;border:1px dashed #2f3550;background:#12141f;display:grid;place-items:center;font:12px/1 system-ui;color:#79809c;animation:ghost 1.2s ease-in-out infinite">собирается…</div>
+                </sc-if>
+                <sc-if value="{{ noPages }}" hint-placeholder-val="{{ true }}">
+                  <div style="grid-column:1/-1;padding:18px 4px;text-align:center;font:13px/1.5 system-ui;color:#79809c">Коллаж ещё не собран. Страницы появятся здесь по мере рендера.</div>
+                </sc-if>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
+              <button style="background:#fff;border:1px solid #dee2ea;border-radius:8px;padding:6px 11px;font:600 12.5px/1 system-ui;color:#5a6072;transition:transform 140ms" style-active="transform:scale(.96)">CSV</button>
+              <button style="background:#fff;border:1px solid #dee2ea;border-radius:8px;padding:6px 11px;font:600 12.5px/1 system-ui;color:#5a6072;transition:transform 140ms" style-active="transform:scale(.96)">JSON</button>
+              <button style="background:#fff;border:1px solid #dee2ea;border-radius:8px;padding:6px 11px;font:600 12.5px/1 system-ui;color:#5a6072;transition:transform 140ms" style-active="transform:scale(.96)">Список текстом</button>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ tabListing }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+              <h3 style="font:650 15px/1.2 system-ui;margin:0">Текст объявления</h3>
+              <button style="background:#fff;border:1px solid #dee2ea;border-radius:8px;padding:6px 11px;font:600 12.5px/1 system-ui;transition:transform 140ms" style-active="transform:scale(.97)">Сгенерировать заново</button>
+            </div>
+            <input type="text" value="{{ title }}" onChange="{{ onTitle }}" style="width:100%;background:#f7f8fb;border:1px solid #dee2ea;border-radius:9px;padding:10px 12px;color:#14161d" style-focus="outline:2px solid #9dbdec;outline-offset:1px;background:#fff" />
+            <textarea rows="14" value="{{ body }}" onChange="{{ onBody }}" style="width:100%;margin-top:10px;background:#f7f8fb;border:1px solid #dee2ea;border-radius:9px;padding:11px 12px;color:#14161d;resize:vertical;font:13px/1.65 ui-monospace,Consolas,monospace" style-focus="outline:2px solid #9dbdec;outline-offset:1px;background:#fff"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button style="background:#fff;border:1px solid #dee2ea;border-radius:8px;padding:7px 12px;font:600 13px/1 system-ui;transition:transform 140ms" style-active="transform:scale(.97)">Копировать заголовок</button>
+              <button style="background:#fff;border:1px solid #dee2ea;border-radius:8px;padding:7px 12px;font:600 13px/1 system-ui;transition:transform 140ms" style-active="transform:scale(.97)">Копировать описание</button>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ tabOffer }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px">
+            <h3 style="font:650 15px/1.2 system-ui;margin:0 0 10px">Выставить на площадки</h3>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+              <sc-for list="{{ marketChips }}" as="m" hint-placeholder-count="2">
+                <button onClick="{{ m.pick }}" style="border-radius:999px;padding:6px 13px;font:13px/1.3 system-ui;font-weight:{{ m.weight }};border:1px solid {{ m.border }};background:{{ m.bg }};color:{{ m.ink }};transition:transform 140ms,background 140ms" style-active="transform:scale(.95)">{{ m.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="text" value="{{ price }}" onChange="{{ onPrice }}" placeholder="Цена" style="width:110px;background:#f7f8fb;border:1px solid #dee2ea;border-radius:9px;padding:9px 11px;color:#14161d" style-focus="outline:2px solid #9dbdec;outline-offset:1px;background:#fff" />
+              <select style="background:#f7f8fb;border:1px solid #dee2ea;border-radius:9px;padding:9px 10px"><option>USD</option><option>EUR</option><option>RUB</option></select>
+            </div>
+            <p style="font:12.5px/1.55 system-ui;color:#5a6072;margin:8px 0 12px">GameBoost считает в евро и не принимает меньше 0.99 — валюта здесь для Eldorado.</p>
+
+            <details style="border:1px solid #dee2ea;border-radius:10px;padding:10px 12px;background:#f7f8fb;margin-bottom:14px">
+              <summary style="cursor:pointer;font:600 13px/1.4 system-ui;color:#14161d;list-style:none">Данные автовыдачи <span style="color:#5a6072;font-weight:400">— уходят только на площадку</span></summary>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;animation:panelIn 220ms cubic-bezier(.2,.7,.3,1) both">
+                <input type="text" placeholder="Логин Epic" style="flex:1 1 45%;min-width:0;background:#fff;border:1px solid #dee2ea;border-radius:9px;padding:9px 11px" />
+                <input type="text" placeholder="Пароль" style="flex:1 1 45%;min-width:0;background:#fff;border:1px solid #dee2ea;border-radius:9px;padding:9px 11px" />
+                <input type="text" placeholder="Почта аккаунта" style="flex:1 1 45%;min-width:0;background:#fff;border:1px solid #dee2ea;border-radius:9px;padding:9px 11px" />
+                <input type="text" placeholder="Пароль от почты" style="flex:1 1 45%;min-width:0;background:#fff;border:1px solid #dee2ea;border-radius:9px;padding:9px 11px" />
+                <input type="text" placeholder="Примечание покупателю" style="flex:1 1 100%;min-width:0;background:#fff;border:1px solid #dee2ea;border-radius:9px;padding:9px 11px" />
+              </div>
+            </details>
+
+            <div style="display:grid;gap:10px">
+              <div style="border:1px dashed #c8cedb;border-radius:11px;padding:11px 13px;background:#fbfcfe">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                  <div>
+                    <div style="font:650 13.5px/1.2 system-ui">Пробный прогон</div>
+                    <div style="font:12px/1.4 system-ui;color:#5a6072;margin-top:2px">Показывает payload. Ничего не создаёт.</div>
+                  </div>
+                  <button onClick="{{ dryRun }}" style="background:#fff;border:1px solid #c8cedb;border-radius:9px;padding:9px 14px;font:600 13px/1 system-ui;white-space:nowrap;transition:transform 140ms,border-color 140ms" style-hover="border-color:#0b5fd0" style-active="transform:scale(.97)">Проверить</button>
+                </div>
+              </div>
+              <div style="border:1px solid #cfe0f8;border-radius:11px;padding:11px 13px;background:#e6effc">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                  <div>
+                    <div style="font:650 13.5px/1.2 system-ui;color:#083f8c">Выставить оффер</div>
+                    <div style="font:12px/1.4 system-ui;color:#0a4592;margin-top:2px">{{ offerSummary }}</div>
+                  </div>
+                  <button onClick="{{ upload }}" disabled="{{ uploadBusy }}" style="background:{{ uploadBtnBg }};color:#fff;border:none;border-radius:9px;padding:10px 16px;font:650 13.5px/1 system-ui;white-space:nowrap;transition:transform 140ms" style-active="transform:scale(.97)">{{ uploadBtnLabel }}</button>
+                </div>
+                <sc-if value="{{ uploadBusy }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:10px;height:5px;border-radius:99px;background:#cfe0f8;overflow:hidden;position:relative">
+                    <div style="height:100%;background:#0b5fd0;transform-origin:left;transform:{{ uploadScale }};transition:transform 400ms linear"></div>
+                  </div>
+                  <div style="font:12px/1.4 system-ui;color:#0a4592;margin-top:5px">{{ uploadStage }}</div>
+                </sc-if>
+              </div>
+            </div>
+
+            <sc-for list="{{ results }}" as="r" hint-placeholder-count="0">
+              <div style="margin-top:10px;border:1px solid {{ r.border }};background:{{ r.bg }};border-radius:11px;padding:11px 13px;animation:{{ r.anim }}">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <span style="width:22px;height:22px;border-radius:50%;background:{{ r.dotBg }};color:#fff;display:grid;place-items:center;font:800 12px/1 system-ui">{{ r.icon }}</span>
+                    <b style="font:650 13.5px/1.3 system-ui;color:{{ r.ink }}">{{ r.text }}</b>
+                  </div>
+                  <sc-if value="{{ r.link }}" hint-placeholder-val="{{ false }}">
+                    <a href="#" style="font:600 12.5px/1 system-ui">открыть оффер</a>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ r.detail }}" hint-placeholder-val="{{ false }}">
+                  <pre style="margin:9px 0 0;padding:10px;background:#0e1018;color:#c8d0e8;border-radius:8px;font:12px/1.55 ui-monospace,Consolas,monospace;overflow-x:auto">{{ r.detail }}</pre>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+        </div>
+      </aside>
+    </div>
+  </div>
+  </sc-if>
+</div>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-top:1px solid #dee2ea">
+  <div style="max-width:1400px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:6px;flex:1 1 380px;min-width:0">
+      <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+        <button onClick="{{ s.pick }}" style="display:flex;align-items:center;gap:7px;border:1px solid {{ s.border }};background:{{ s.bg }};border-radius:999px;padding:5px 11px 5px 6px;transition:transform 140ms,background 140ms" style-active="transform:scale(.96)">
+          <span style="width:19px;height:19px;border-radius:50%;background:{{ s.dot }};color:{{ s.dotInk }};display:grid;place-items:center;font:800 11px/1 system-ui">{{ s.n }}</span>
+          <span style="font:600 12.5px/1.2 system-ui;color:{{ s.ink }};white-space:nowrap">{{ s.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+      <span style="font:12.5px/1.3 system-ui;color:#5a6072;text-align:right">{{ footNote }}</span>
+      <button onClick="{{ toOffer }}" style="background:#0b5fd0;color:#fff;border:none;border-radius:9px;padding:10px 18px;font:650 14px/1 system-ui;transition:transform 140ms,background 140ms" style-hover="background:#0a51b3" style-active="transform:scale(.97)">К офферу</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;notableStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;ring&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark' | 'ring'&quot;,&quot;section&quot;:&quot;Плашки&quot;},&quot;tileSize&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:132,&quot;min&quot;:112,&quot;max&quot;:168,&quot;step&quot;:4,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Плашки&quot;}}">
+const RAR = [
+  ['mythic','Мифический',100,'#fff7dc','#ffeab2','#8a6410','#fdf3d2'],
+  ['icon','Icon Series',95,'#ddf7f7','#b7edef','#0a6a70','#d3f4f4'],
+  ['dark','Dark Series',90,'#f9e7fd','#efc9f8','#7a1e94','#f4dffa'],
+  ['shadow','Shadow Series',88,'#edeff2','#dadde4','#43494f','#e6e9ee'],
+  ['slurp','Slurp Series',86,'#ddf9ee','#b3f0da','#0a6b52','#d2f6e7'],
+  ['lava','Lava Series',84,'#ffe9dc','#ffd0b4','#9c3d0a','#ffe0cd'],
+  ['frozen','Frozen Series',82,'#e6f5ff','#c2e7fd','#0f5f87','#dcf0fe'],
+  ['marvel','MARVEL',80,'#ffe5e5','#ffc7c7','#a81c22','#ffdada'],
+  ['dc','DC',78,'#e4eafa','#c4d4f2','#1b3f8f','#dae3f7'],
+  ['starwars','Star Wars',76,'#eaecf4','#d2d6e6','#3c4468','#e2e5f0'],
+  ['gaminglegends','Gaming Legends',74,'#ece9fe','#d4cefc','#4b2fb0','#e4e0fd'],
+  ['legendary','Легендарный',60,'#fff1de','#ffdfb7','#8f5406','#ffe8ca'],
+  ['epic','Эпический',50,'#f2e9fd','#dfcefb','#6a2bc4','#eae0fc'],
+  ['rare','Редкий',40,'#e3effe','#c1ddfc','#0f5bbd','#daeafd'],
+  ['uncommon','Необычный',30,'#e9f7dd','#cfefb6','#3d6b12','#e0f3d0'],
+  ['common','Обычный',20,'#f4f5f7','#e5e7ec','#585f70','#eceef2'],
+];
+const TYPES = [['outfit','Скины'],['pickaxe','Кирки'],['glider','Планеры'],['backpack','Рюкзаки'],['emote','Эмоции'],['wrap','Обёртки'],['music','Музыка'],['loadingscreen','Загрузочные'],['spray','Спреи']];
+const NOTABLE = ['Renegade Raider','Black Knight','Ghoul Trooper','Skull Trooper','Recon Expert','Aerial Assault Trooper','IKONIK','Galaxy','The Reaper','Merry Mint Axe'];
+const A = ['Neo','Storm','Crypt','Vault','Aero','Iron','Lunar','Ronin','Frost','Zero','Onyx','Vega','Nova','Rift','Ember','Cobalt','Static','Drift','Astro','Pale'];
+const B = ['Raider','Warden','Vanguard','Scout','Marshal','Sentinel','Runner','Hunter','Blade','Specter','Trooper','Rogue','Pilot','Herald','Knight','Ace','Wraith','Ranger'];
+const SEASONS = ['Сезон 1','Сезон 2','Сезон 3','Сезон 4','Сезон 5','Сезон 7','Сезон 9','Глава 2, сезон 2','Глава 3, сезон 1','Глава 4, сезон 3','Глава 5, сезон 2','Fortnite OG'];
+
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+class Component extends DCLogic {
+  state = {
+    phase:'connect', secs:600, tab:'collage', limit:600, search:'', type:null, rarity:null,
+    arriving:false, statP:1, picked:{}, pages:[], rendering:null,
+    price:'149', markets:{gameboost:true,eldorado:true},
+    upload:'idle', uploadStep:0, results:[], title:'', body:'',
+  };
+
+  componentDidMount(){ this.all = this.build(); }
+  componentWillUnmount(){ clearInterval(this.tick); clearTimeout(this.job); clearInterval(this.job2); clearTimeout(this.arrive); }
+
+  build(){
+    const rnd = mulberry(7);
+    const out = [];
+    NOTABLE.forEach((name,i)=>{
+      const r = ['rare','epic','legendary','icon','mythic','dark'][i%6];
+      out.push({id:'n'+i,name,type:i>8?'pickaxe':'outfit',rarity:r,season:SEASONS[i%4],notable:true});
+    });
+    for(let i=0;i<610;i++){
+      const w = rnd();
+      const rk = w<0.28?'common':w<0.55?'uncommon':w<0.78?'rare':w<0.92?'epic':w<0.965?'legendary':RAR[Math.floor(rnd()*11)][0];
+      const t = TYPES[Math.floor(rnd()*TYPES.length)][0];
+      out.push({id:'i'+i,name:A[Math.floor(rnd()*A.length)]+' '+B[Math.floor(rnd()*B.length)],type:t,rarity:rk,season:SEASONS[Math.floor(rnd()*SEASONS.length)],notable:false});
+    }
+    return out;
+  }
+
+  connect = () => {
+    this.setState({phase:'waiting',secs:600});
+    clearInterval(this.tick);
+    this.tick = setInterval(()=>{
+      this.setState(s=>{
+        if(s.phase!=='waiting'){clearInterval(this.tick);return null}
+        return {secs:Math.max(0,s.secs-1)};
+      });
+    },1000);
+    // Демо: через 6 секунд «продавец подтвердил вход» — кульминация №1.
+    this.arrive = setTimeout(()=>{
+      clearInterval(this.tick);
+      this.setState({phase:'reading'});
+      setTimeout(()=>{
+        this.setState({phase:'app',arriving:true,statP:0,
+          title:'Fortnite аккаунт — 620 предметов, Renegade Raider, Black Knight',
+          body:'Аккаунт Fortnite, 620 предметов в раздевалке.\n\nРедкое: Renegade Raider, Black Knight, Ghoul Trooper, Skull Trooper, Recon Expert.\n\nСкинов: 214. Из 1–4 сезонов: 63.\nУровень аккаунта: 412, сыграно сезонов: 21.\nВ-Баксов: 1 300.\n\nПривязки: PlayStation, Xbox, Steam. Почта подтверждена, ник можно сменить.\nПередача — полная почта + смена данных.'});
+        let f=0;
+        const count=setInterval(()=>{f++;this.setState({statP:Math.min(1,f/14)});if(f>=14)clearInterval(count)},50);
+        setTimeout(()=>{clearInterval(count);this.setState({statP:1})},800);
+        setTimeout(()=>this.setState({arriving:false}),1100);
+      },1400);
+    },6000);
+  };
+
+  manual = () => this.connect();
+  reset = () => { clearInterval(this.tick); clearTimeout(this.arrive); this.setState({phase:'connect',pages:[],results:[],upload:'idle',limit:600,type:null,rarity:null,search:''}); };
+  showAll = () => this.setState({limit:9999});
+  resetFilter = () => this.setState({type:null,rarity:null,search:'',limit:600});
+  onSearch = e => this.setState({search:e.target.value,limit:600});
+  onTitle = e => this.setState({title:e.target.value});
+  onBody = e => this.setState({body:e.target.value});
+  onPrice = e => this.setState({price:e.target.value.replace(',','.')});
+  toOffer = () => this.setState({tab:'offer'});
+
+  renderCollage = () => {
+    const total = 8;
+    if(this.state.rendering) return;
+    clearTimeout(this.job);
+    this.setState({rendering:{done:0,total},pages:[]});
+    // Каждая следующая страница планируется только после того, как предыдущая
+    // легла в state — пропущенный тик не может оставить панель в «Рендер 7/8».
+    const step = () => {
+      this.setState(s=>{
+        const done = s.pages.length + 1;
+        const rnd = mulberry(done*31);
+        const cells = Array.from({length:24},()=>{
+          const r = RAR[Math.floor(rnd()*RAR.length)];
+          return {border:r[5],bg:'linear-gradient(180deg,'+this.dark(r[5],.55)+','+this.dark(r[5],.15)+')'};
+        });
+        return {pages:[...s.pages,{n:done,label:'страница '+done+' · 96 плашек',cells}],
+                rendering: done>=total ? null : {done,total}};
+      }, ()=>{
+        if(this.state.pages.length < total) this.job = setTimeout(step,420);
+        else this.setState({rendering:null});
+      });
+    };
+    this.job = setTimeout(step,300);
+  };
+
+  dark(hex,k){
+    const n = parseInt(hex.slice(1),16);
+    const r = Math.round((n>>16&255)*k), g = Math.round((n>>8&255)*k), b = Math.round((n&255)*k);
+    return 'rgb('+r+','+g+','+b+')';
+  }
+
+  upload = () => {
+    if(this.state.upload==='busy') return;
+    this.setState({upload:'busy',uploadStep:0,results:[]});
+    clearInterval(this.job2);
+    let step = 0;
+    this.job2 = setInterval(()=>{
+      step++;
+      this.setState({uploadStep:step});
+      if(step>=5){
+        clearInterval(this.job2);
+        this.setState({upload:'ok',results:[
+          {ok:true,label:'GameBoost — оффер создан',link:true},
+          {ok:false,label:'Eldorado — ошибка: 422, поле game_id не принято'},
+        ]});
+      }
+    },520);
+  };
+
+  dryRun = () => {
+    this.setState({upload:'dry',results:[{ok:true,dry:true,label:'Payload собран, ничего не отправлено',detail:'{\n  "title": "Fortnite аккаунт — 620 предметов…",\n  "price": '+(Number(this.state.price)||0)+',\n  "currency": "USD",\n  "images": 8,\n  "credentials": "•••• маскировано"\n}'}]});
+  };
+
+  filtered(){
+    const {type,rarity,search} = this.state;
+    const q = search.trim().toLowerCase();
+    return (this.all||[]).filter(i=>{
+      if(type && i.type!==type) return false;
+      if(rarity && i.rarity!==rarity) return false;
+      if(q && !i.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  renderVals(){
+    const s = this.state;
+    const tileSize = this.props.tileSize ?? 132;
+    const notableStyle = this.props.notableStyle ?? 'dark';
+    const all = this.all||[];
+    const list = this.filtered();
+    const shown = list.slice(0,s.limit);
+    const rmap = {}; RAR.forEach(r=>rmap[r[0]]=r);
+    const p = s.statP;
+
+    const digits = 'K7QH2M4P'.split('').map((ch,i)=>({ch,delay:(i*0.11).toFixed(2)+'s'}));
+    const mm = Math.floor(s.secs/60), ss = String(s.secs%60).padStart(2,'0');
+
+    const statDefs = [[all.length,'предметов всего'],[214,'скинов'],[63,'из 1–4 сезонов'],[1300,'В-Баксов'],[412,'уровень аккаунта'],[87,'уровень БП'],[21,'сыграно сезонов'],[1642,'побед за всё время']];
+    const stats = statDefs.map((d,i)=>({value:Math.round(d[0]*p).toLocaleString('ru-RU'),label:d[1],delay:(i*45)+'ms'}));
+
+    const typeCount = {}; const rarCount = {};
+    all.forEach(i=>{typeCount[i.type]=(typeCount[i.type]||0)+1;rarCount[i.rarity]=(rarCount[i.rarity]||0)+1});
+    const chip = (active,label,count,pick,accent)=>({label,count,pick,
+      bg: active ? (accent||'#0b5fd0') : '#f7f8fb',
+      border: active ? (accent||'#0b5fd0') : '#dee2ea',
+      ink: active ? '#fff' : (accent||'#5a6072'),
+      weight: active ? 650 : 400});
+
+    const typeChips = [chip(s.type===null,'Все типы',all.length,()=>this.setState({type:null,limit:600}))]
+      .concat(TYPES.filter(t=>typeCount[t[0]]).map(t=>chip(s.type===t[0],t[1],typeCount[t[0]],()=>this.setState({type:s.type===t[0]?null:t[0],limit:600}))));
+    const rarityChips = [chip(s.rarity===null,'Любая',all.length,()=>this.setState({rarity:null,limit:600}))]
+      .concat(RAR.filter(r=>rarCount[r[0]]).map(r=>{
+        const c = chip(s.rarity===r[0],r[1],rarCount[r[0]],()=>this.setState({rarity:s.rarity===r[0]?null:r[0],limit:600}),r[5]);
+        if(s.rarity!==r[0]) c.border = r[5];
+        return c;
+      }));
+
+    const tiles = shown.map((it,idx)=>{
+      const r = rmap[it.rarity]||rmap.common;
+      const early = idx<42;
+      const dark = it.notable && notableStyle==='dark';
+      return {
+        name:it.name, meta:it.season, initials:it.name.slice(0,2).toUpperCase(),
+        title:it.name+' — '+r[1],
+        from: dark?'#1b1f2e':r[3], to: dark?'#0e1018':r[4],
+        border: it.notable?(dark?'#ffd447':'#14161d'):r[5],
+        bar: dark?'#ffd447':r[5],
+        art: dark?'rgba(255,255,255,.06)':'rgba(255,255,255,.6)',
+        ink: dark?'#f2f4fa':'#14161d',
+        dim: dark?'#a9b0c8':r[5],
+        shadow: it.notable?(dark?'0 2px 10px rgba(14,16,24,.28)':'0 0 0 2px #ffd447'):'none',
+        notable: it.notable, picked: !!s.picked[it.id],
+        ring: it.notable && s.arriving, ringDelay:(240+idx*12)+'ms',
+        cv: (s.arriving && early) ? 'visible' : 'auto',
+        anim: (s.arriving && early) ? ('tileIn 260ms cubic-bezier(.2,.7,.3,1) '+(idx*14)+'ms both') : 'none',
+        pick: ()=>this.setState(st=>({picked:{...st.picked,[it.id]:!st.picked[it.id]}})),
+      };
+    });
+
+    const tab = s.tab;
+    const tabDefs = [['collage','Коллаж',(s.pages.length?s.pages.length+' стр.':'не собран')],['listing','Текст','готов'],['offer','Оффер',(s.upload==='ok'?'создан':'не выставлен')]];
+    const tabs = tabDefs.map(t=>({label:t[1],hint:t[2],pick:()=>this.setState({tab:t[0]}),
+      bg: tab===t[0]?'#fff':'transparent', border: tab===t[0]?'#dee2ea':'transparent',
+      ink: tab===t[0]?'#14161d':'#5a6072', dim: tab===t[0]?'#0b5fd0':'#8a90a3'}));
+
+    const stepDefs = [['1','Аккаунт','done'],['2','Предметы','done'],['3','Коллаж',s.pages.length?'done':'todo'],['4','Оффер',s.upload==='ok'?'done':'todo']];
+    const steps = stepDefs.map(d=>{
+      const done = d[2]==='done';
+      return {n:d[0],label:d[1],pick:()=>this.setState({tab:d[0]==='4'?'offer':d[0]==='3'?'collage':'collage'}),
+        bg: done?'#eaf6ef':'#f7f8fb', border: done?'#bfe0cd':'#dee2ea',
+        dot: done?'#0a7a4d':'#c8cedb', dotInk:'#fff', ink: done?'#0a5c3a':'#5a6072'};
+    });
+
+    const marketChips = [['gameboost','GameBoost'],['eldorado','Eldorado']].map(m=>{
+      const on = s.markets[m[0]];
+      return {label:m[1],pick:()=>this.setState(st=>({markets:{...st.markets,[m[0]]:!st.markets[m[0]]}})),
+        bg:on?'#0b5fd0':'#f7f8fb', border:on?'#0b5fd0':'#dee2ea', ink:on?'#fff':'#5a6072', weight:on?650:400};
+    });
+
+    const marketCount = Object.values(s.markets).filter(Boolean).length;
+    const busy = s.upload==='busy';
+    const stages = ['','Публикуем страницу 1 из 8…','Публикуем страницу 5 из 8…','Публикуем страницу 8 из 8…','Создаём офферы…','Готово'];
+
+    const results = (s.results||[]).map(r=>({
+      text:r.label, icon:r.ok?'✓':'!', link:!!r.link, detail:r.detail||'',
+      bg:r.ok?(r.dry?'#f7f8fb':'#eaf6ef'):'#fdecec',
+      border:r.ok?(r.dry?'#dee2ea':'#bfe0cd'):'#f1c4c4',
+      dotBg:r.ok?(r.dry?'#5a6072':'#0a7a4d'):'#c0272d',
+      ink:r.ok?(r.dry?'#14161d':'#0a5c3a'):'#8f1d22',
+      anim:r.ok?'popIn 320ms cubic-bezier(.2,.7,.3,1) both':'shake 420ms cubic-bezier(.36,.07,.19,.97) both',
+    }));
+
+    return {
+      isConnect:s.phase==='connect', isWaiting:s.phase==='waiting', isReading:s.phase==='reading', isApp:s.phase==='app',
+      digits, code:'K7QH2M4P', timerText:mm+':'+ss, timerScale:'scaleX('+(s.secs/600).toFixed(3)+')',
+      connect:this.connect, manual:this.manual, reset:this.reset,
+      displayName:'ogv1beaner', headline:NOTABLE.slice(0,5).join(', '), stats,
+      tile:tileSize, tiles, typeChips, rarityChips, search:s.search, dirty:!!(s.type||s.rarity||s.search),
+      onSearch:this.onSearch, resetFilter:this.resetFilter, showAll:this.showAll,
+      countText: list.length===all.length ? all.length+' шт.' : list.length+' из '+all.length,
+      hasMore:list.length>s.limit, moreCount:list.length-s.limit,
+      tabs, tabCollage:tab==='collage', tabListing:tab==='listing', tabOffer:tab==='offer',
+      collageNote: list.length+' предметов — 8 страниц по 96 плашек, 2560×1440.',
+      renderCollage:this.renderCollage, rendering:!!s.rendering,
+      renderBtnLabel: s.rendering ? ('Рендер '+s.rendering.done+'/'+s.rendering.total+'…') : 'Собрать коллаж',
+      renderBtnBg: s.rendering ? '#5a6072' : '#0b5fd0',
+      renderScale: 'scaleX('+(s.rendering?(s.rendering.done/s.rendering.total).toFixed(3):1)+')',
+      pages:s.pages, noPages:s.pages.length===0 && !s.rendering,
+      title:s.title, body:s.body, onTitle:this.onTitle, onBody:this.onBody,
+      price:s.price, onPrice:this.onPrice, marketChips, dryRun:this.dryRun, upload:this.upload,
+      uploadBusy:busy, uploadBtnLabel: busy?'Выставляем…':(s.upload==='ok'?'Выставить заново':'Выставить'),
+      uploadBtnBg: busy?'#5a6072':'#0b5fd0',
+      uploadScale:'scaleX('+(s.uploadStep/5).toFixed(2)+')', uploadStage:stages[s.uploadStep]||'',
+      offerSummary:'Создаст реальные офферы · '+marketCount+' площадки · '+(s.price||'0')+' USD',
+      results, steps, toOffer:this.toOffer,
+      footNote: s.pages.length ? 'Коллаж готов: '+s.pages.length+' стр.' : 'Осталось: собрать коллаж',
+    };
+  }
+}
+</script>
+</body>
+</html>

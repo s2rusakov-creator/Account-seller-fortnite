@@ -1,16 +1,53 @@
+/*
+ * Светлая тема, по макету «Локер — светлая тема» из Claude Design.
+ *
+ * Одно правило проходит через весь файл: светлый здесь только интерфейс.
+ * Коллаж и карточка профиля (lib/collage.ts, lib/profile-card.ts) рисуются на
+ * тёмном и такими остаются — это картинки объявления, они уходят на
+ * маркетплейс, а не показываются здесь. Поэтому в светлой странице есть один
+ * намеренно тёмный блок: оправа превью.
+ */
+
 :root {
-  --bg: #07070f;
-  --bg-raised: #12131f;
-  --bg-input: #191a29;
-  --border: #262840;
-  --text: #eef0fb;
-  --muted: #9096b8;
-  --accent: #4fc3ff;
-  --accent-dark: #1f6f9c;
-  --good: #46d99a;
-  --warn: #ffb547;
-  --bad: #ff6b6b;
-  color-scheme: dark;
+  --bg: #eef0f5;
+  --surface: #ffffff;
+  --sunken: #f7f8fb;
+  --border: #dee2ea;
+  --border-strong: #c8cedb;
+  --text: #14161d;
+  --muted: #5a6072;
+
+  --accent: #0b5fd0;
+  --accent-hover: #0a51b3;
+  --accent-ink: #083f8c;
+  --accent-soft: #e6effc;
+  --accent-border: #cfe0f8;
+  --focus: #9dbdec;
+
+  --good: #0a7a4d;
+  --good-bg: #eaf6ef;
+  --good-border: #bfe0cd;
+  --good-ink: #0a5c3a;
+
+  --bad: #c0272d;
+  --bad-bg: #fdecec;
+  --bad-border: #f1c4c4;
+  --bad-ink: #8f1d22;
+
+  --warn-bg: #fff8e6;
+  --warn-border: #f0dfae;
+  --warn-ink: #5a4200;
+
+  /* Золото «редкого» и тёмная подложка под него — единственные тёмные пятна
+     в интерфейсе, и это осознанно: см. .tile[data-notable]. */
+  --gold: #ffd447;
+  --ink-900: #0e1018;
+  --ink-800: #12141f;
+  --ink-700: #1b1f2e;
+
+  --shadow-card: 0 1px 2px rgba(20, 22, 29, 0.04);
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  color-scheme: light;
 }
 
 * {
@@ -19,15 +56,22 @@
 
 body {
   margin: 0;
-  background: radial-gradient(1200px 700px at 50% -220px, #1b2350 0%, var(--bg) 62%);
+  background: radial-gradient(1100px 520px at 50% -260px, #ffffff 0%, var(--bg) 70%);
   background-attachment: fixed;
   color: var(--text);
-  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
 
 a {
   color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-ink);
+  text-decoration: underline;
 }
 
 button {
@@ -37,64 +81,212 @@ button {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.55;
 }
+
+/* ---------- Анимации ----------
+ * Только transform и opacity: на сетке в две с половиной тысячи плиток всё
+ * остальное роняет частоту кадров. Каскад появления ограничен первым экраном
+ * (см. ItemGrid) — stagger по всем плиткам занял бы минуту.
+ */
+
+@keyframes tileIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ringPulse {
+  0% { opacity: 0; transform: scale(0.9); }
+  35% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes statIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { opacity: 1; transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-6px); }
+  36% { transform: translateX(5px); }
+  54% { transform: translateX(-3px); }
+  78% { transform: translateX(2px); }
+}
+
+@keyframes digitBreath {
+  0%, 100% { opacity: 0.55; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-1px); }
+}
+
+@keyframes dotPulse {
+  0% { opacity: 0.25; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.25; transform: scale(0.7); }
+}
+
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ghost {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ---------- Каркас ---------- */
 
 .page {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 28px 20px 80px;
+  /* Нижний отступ под фиксированную панель шагов. */
+  padding: 22px 20px 96px;
 }
 
 header.top {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand .mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, var(--accent), #062f6a);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font: 800 15px/1 system-ui;
+  flex: none;
 }
 
 h1 {
-  font-size: 26px;
+  font: 700 20px/1.2 system-ui;
   margin: 0;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.3px;
 }
 
 .sub {
+  font-size: 13px;
   color: var(--muted);
-  font-size: 14px;
 }
 
 .card {
-  background: var(--bg-raised);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 18px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
+  animation: panelIn 300ms var(--ease) both;
 }
+
+.section-title {
+  font: 650 17px/1.2 system-ui;
+  margin: 0 0 12px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.spread {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.error {
+  color: var(--bad-ink);
+  background: var(--bad-bg);
+  border: 1px solid var(--bad-border);
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+}
+
+/* ---------- Кнопки ---------- */
 
 .btn {
   background: var(--accent);
-  color: #06131c;
+  color: #fff;
   border: none;
   border-radius: 10px;
   padding: 11px 18px;
-  font-weight: 650;
-  transition: filter 0.15s;
+  font: 650 14px/1 system-ui;
+  box-shadow: 0 1px 2px rgba(11, 95, 208, 0.4);
+  transition: transform 140ms var(--ease), background 140ms;
 }
 
 .btn:hover:not(:disabled) {
-  filter: brightness(1.1);
+  background: var(--accent-hover);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn.secondary {
-  background: transparent;
+  background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
+  box-shadow: none;
 }
 
 .btn.secondary:hover:not(:disabled) {
+  background: var(--surface);
   border-color: var(--accent);
 }
 
@@ -104,124 +296,313 @@ h1 {
   border-radius: 8px;
 }
 
-.row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
+/* Кнопка занята работой: цвет уходит в серый, чтобы «идёт» не выглядело как
+   «нажми ещё раз». */
+.btn[data-busy='true'] {
+  background: var(--muted);
 }
+
+/* ---------- Поля ---------- */
 
 input[type='text'],
 input[type='search'],
 select,
 textarea {
-  background: var(--bg-input);
+  background: var(--sunken);
   border: 1px solid var(--border);
   border-radius: 9px;
   color: var(--text);
-  padding: 10px 12px;
+  padding: 9px 12px;
   font: inherit;
+  transition: background 140ms, border-color 140ms;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid var(--accent-dark);
+  outline: 2px solid var(--focus);
   outline-offset: 1px;
+  background: var(--surface);
 }
 
 textarea {
   width: 100%;
   resize: vertical;
-  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.6;
+  font: 13px/1.65 ui-monospace, 'Cascadia Code', Consolas, monospace;
 }
 
-/* Device-code panel */
+/* ---------- Подключение Epic ---------- */
+
+.polling {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  margin: -18px -20px 20px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--accent-border);
+  border-radius: 13px 13px 0 0;
+}
+
+.polling .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.polling .dot:nth-child(2) { animation-delay: 0.2s; }
+.polling .dot:nth-child(3) { animation-delay: 0.4s; }
+
+.polling span:last-child {
+  font: 600 13px/1 system-ui;
+  color: var(--accent-ink);
+  margin-left: 4px;
+}
+
 .code-box {
-  font: 700 34px/1.2 ui-monospace, Consolas, monospace;
-  letter-spacing: 6px;
-  background: var(--bg-input);
-  border: 1px dashed var(--accent-dark);
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px dashed var(--focus);
   border-radius: 12px;
-  padding: 16px 22px;
-  text-align: center;
+  padding: 18px 14px;
   user-select: all;
 }
 
+.code-box b {
+  font: 700 32px/1 ui-monospace, Consolas, monospace;
+  color: var(--text);
+  animation: digitBreath 2.6s ease-in-out infinite;
+}
+
+.meter {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+}
+
+.meter > i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  transition: transform 1s linear;
+}
+
+/* Блик поверх полосы: показывает, что работа идёт, даже когда доля не
+   меняется — публикация одной страницы занимает несколько секунд. */
+.meter[data-sweep='true']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: sweep 900ms linear infinite;
+}
+
 .steps {
-  margin: 12px 0 0;
-  padding-left: 20px;
+  margin: 0;
+  padding-left: 22px;
+  font: 14px/1.9 system-ui;
   color: var(--muted);
-  line-height: 1.9;
 }
 
 .steps b {
   color: var(--text);
 }
 
-/* Stats strip */
+.spinner {
+  width: 26px;
+  height: 26px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-border);
+  border-top-color: var(--accent);
+  animation: spin 700ms linear infinite;
+}
+
+/* ---------- Статистика ---------- */
+
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+  gap: 8px;
 }
 
 .stat {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  padding: 12px 14px;
+  background: var(--sunken);
+  border: 1px solid #e6e9f0;
+  border-radius: 10px;
+  padding: 9px 11px;
+  animation: statIn 300ms var(--ease) both;
 }
 
 .stat .value {
-  font-size: 22px;
-  font-weight: 700;
+  font: 700 21px/1.15 system-ui;
   letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat .label {
+  font-size: 11.5px;
   color: var(--muted);
-  font-size: 12px;
   margin-top: 2px;
 }
 
-/* Filters */
+.facts {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--bg);
+}
+
+.facts .warn {
+  color: #8a5a00;
+  font-weight: 600;
+}
+
+.headline {
+  font-size: 13px;
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: 9px;
+  color: var(--warn-ink);
+}
+
+.headline b {
+  color: #3d2c00;
+}
+
+/* ---------- Воркспейс ---------- */
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.workspace > section {
+  min-width: 0;
+}
+
+/* Фильтры не уезжают вверх вместе с сеткой: по ним работают, пока сетка
+   листается. */
+.filters-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  padding-bottom: 10px;
+}
+
+.side {
+  position: sticky;
+  top: 10px;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.side .tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 8px 0;
+  background: var(--sunken);
+  border-bottom: 1px solid var(--border);
+}
+
+.side .tabs button {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 9px 9px 0 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 9px 8px;
+  font: 600 13px/1.2 system-ui;
+  transition: background 140ms, color 140ms;
+}
+
+.side .tabs button[data-active='true'] {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.side .tabs .hint {
+  display: block;
+  font: 11px/1.3 system-ui;
+  color: #8a90a3;
+  margin-top: 2px;
+}
+
+.side .tabs button[data-active='true'] .hint {
+  color: var(--accent);
+}
+
+.side .pane {
+  padding: 16px;
+}
+
+/* ---------- Чипы фильтров ---------- */
+
 .chips {
   display: flex;
-  gap: 7px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .chip {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
   border-radius: 999px;
+  padding: 5px 12px;
+  font: 13px/1.3 system-ui;
+  border: 1px solid var(--border);
+  background: var(--sunken);
   color: var(--muted);
-  padding: 6px 13px;
-  font-size: 13px;
-  transition: 0.15s;
+  transition: transform 140ms var(--ease), background 140ms, border-color 140ms;
 }
 
 .chip:hover {
-  color: var(--text);
+  border-color: var(--focus);
+}
+
+.chip:active {
+  transform: scale(0.95);
 }
 
 .chip[data-active='true'] {
   background: var(--accent);
   border-color: var(--accent);
-  color: #06131c;
-  font-weight: 600;
+  color: #fff;
+  font-weight: 650;
 }
 
 .chip .count {
-  opacity: 0.65;
+  opacity: 0.62;
   margin-left: 5px;
   font-variant-numeric: tabular-nums;
 }
 
-/* Item grid */
+/* ---------- Сетка предметов ---------- */
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
@@ -229,47 +610,85 @@ textarea {
 }
 
 .tile {
+  position: relative;
   border-radius: 12px;
   border: 1px solid var(--tile-accent, var(--border));
-  background: linear-gradient(180deg, var(--tile-from, #23252f), var(--tile-to, #101118));
+  background: linear-gradient(180deg, var(--tile-from, #f4f5f7), var(--tile-to, #e5e7ec));
   padding: 8px;
   text-align: center;
   overflow: hidden;
-  /* A full locker is a couple of thousand tiles; skipping the layout and paint
-     of off-screen ones keeps scrolling smooth without a virtualiser. */
+  color: var(--text);
+  transition: transform 150ms var(--ease);
+  /* Пропуск раскладки и отрисовки того, что за экраном: полная раздевалка —
+     это пара тысяч плиток. */
   content-visibility: auto;
-  contain-intrinsic-size: 180px;
+  contain-intrinsic-size: auto 196px;
 }
 
-.tile img {
+.tile:hover {
+  transform: translateY(-3px) scale(1.03);
+  z-index: 2;
+}
+
+/* Плитка, попавшая в первый экран при приходе данных: только она участвует в
+   каскаде. Каскад по всем двум тысячам — это минута неюзабельной страницы. */
+.tile[data-enter='true'] {
+  content-visibility: visible;
+  animation: tileIn 260ms var(--ease) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+.tile .bar {
+  height: 3px;
+  border-radius: 99px;
+  background: var(--tile-accent, var(--border));
+  margin-bottom: 6px;
+}
+
+/* Подложка под арт.
+ *
+ * Не украшение: эмоции и смайлики Fortnite приходят одноканальным серым с
+ * альфой, где все видимые пиксели — чистый белый. На светлой плашке такая
+ * иконка исчезает совсем. Типы с белым артом получают тёмную подложку, всё
+ * остальное — светлую. Список типов в lib/fortnite/rarity.ts. */
+.tile .art {
   width: 100%;
   aspect-ratio: 1;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.tile[data-art='dark'] .art {
+  background: var(--ink-800);
+}
+
+.tile .art img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   display: block;
 }
 
 .tile .no-art {
-  width: 100%;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  font-size: 26px;
-  font-weight: 700;
+  font: 700 22px/1 ui-monospace, Consolas, monospace;
   color: var(--tile-accent, var(--muted));
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+}
+
+.tile[data-art='dark'] .no-art {
+  color: #a9b0c8;
 }
 
 .tile .name {
-  font-size: 12.5px;
-  font-weight: 600;
+  font: 600 12.5px/1.25 system-ui;
   margin-top: 6px;
-  line-height: 1.25;
+  min-height: 31px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 31px;
 }
 
 .tile .meta {
@@ -281,81 +700,323 @@ textarea {
   text-overflow: ellipsis;
 }
 
-/* An item the price is built on: Renegade Raider and its peers carry a plain
-   rarity colour, so without this they look like any other blue tile. */
-.tile[data-notable] {
-  border-color: #ffd447;
-  box-shadow: 0 0 0 1px rgba(255, 212, 71, 0.35);
-}
-
-.tile .notable {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #ffd447;
-  margin-top: 3px;
-  letter-spacing: 0.3px;
-}
-
 .tile .styles {
   font-size: 10.5px;
   color: var(--muted);
   margin-top: 2px;
 }
 
-.tile[data-picked] {
-  opacity: 1;
+/*
+ * «Редкое» — тёмная плитка на светлой странице.
+ *
+ * Золотая рамка на белом почти не видна, а это ровно те предметы, на которых
+ * строится цена. Инверсия работает там, где цвет не сработал: на экране из
+ * двух тысяч светлых плиток тёмная находится мгновенно.
+ */
+.tile[data-notable='true'] {
+  background: linear-gradient(180deg, var(--ink-700), var(--ink-900));
+  border-color: var(--gold);
+  box-shadow: 0 2px 10px rgba(14, 16, 24, 0.28);
+  color: #f2f4fa;
+}
+
+.tile[data-notable='true'] .bar {
+  background: var(--gold);
+}
+
+.tile[data-notable='true'] .art {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tile[data-notable='true'] .meta,
+.tile[data-notable='true'] .styles {
+  color: #a9b0c8;
+}
+
+.tile .notable {
+  font: 800 10px/1 system-ui;
+  letter-spacing: 0.6px;
+  color: var(--gold);
+  margin-top: 5px;
+}
+
+/* Золотое кольцо пробегает по редким предметам в момент прихода данных —
+   один раз, не циклом. */
+.tile .ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border: 2px solid var(--gold);
+  pointer-events: none;
+  animation: ringPulse 460ms var(--ease) both;
+  animation-delay: var(--ring-delay, 0ms);
+}
+
+.tile[data-picked='true'] {
   box-shadow: 0 0 0 2px var(--accent);
 }
 
-/* Collage previews */
-.previews {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+/* ---------- Превью коллажа: намеренно тёмный остров ---------- */
+
+.render-frame {
   margin-top: 14px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: var(--ink-900);
+}
+
+.render-frame > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--sunken);
+  border-bottom: 1px solid var(--border);
+}
+
+.render-frame > header b {
+  font: 600 12px/1.3 system-ui;
+  color: var(--text);
+}
+
+.render-frame > header span {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.previews {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
 }
 
 .previews figure {
   margin: 0;
+  animation: pageIn 380ms var(--ease) both;
 }
 
 .previews img {
   width: 100%;
-  border-radius: 10px;
-  border: 1px solid var(--border);
+  border-radius: 8px;
+  border: 1px solid #2a2f45;
   display: block;
 }
 
 .previews figcaption {
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 6px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
-  align-items: center;
+  font-size: 11.5px;
+  color: #a6adc4;
+  margin-top: 5px;
 }
 
-.note {
-  color: var(--muted);
+.previews .btn.secondary {
+  background: #1c2033;
+  border-color: #2f3550;
+  color: #e8ebf5;
+}
+
+.previews .empty {
+  grid-column: 1 / -1;
+  padding: 18px 4px;
+  text-align: center;
   font-size: 13px;
+  color: #79809c;
 }
 
-.error {
-  color: var(--bad);
-  font-size: 14px;
+.previews .pending {
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  border: 1px dashed #2f3550;
+  background: var(--ink-800);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: #79809c;
+  animation: ghost 1.2s ease-in-out infinite;
 }
 
-.section-title {
-  font-size: 17px;
-  font-weight: 650;
-  margin: 0 0 12px;
+/* ---------- Оффер ---------- */
+
+.action-card {
+  border: 1px dashed var(--border-strong);
+  border-radius: 11px;
+  padding: 11px 13px;
+  background: #fbfcfe;
 }
 
-.spread {
+/* Реальная публикация отличается от пробного прогона до клика, а не после. */
+.action-card[data-live='true'] {
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.action-card .title {
+  font: 650 13.5px/1.2 system-ui;
+}
+
+.action-card[data-live='true'] .title {
+  color: var(--accent-ink);
+}
+
+.action-card .hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.action-card[data-live='true'] .hint {
+  color: #0a4592;
+}
+
+.result {
+  margin-top: 10px;
+  border-radius: 11px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  background: var(--sunken);
+  animation: popIn 320ms var(--ease) both;
+}
+
+.result[data-kind='ok'] {
+  background: var(--good-bg);
+  border-color: var(--good-border);
+  color: var(--good-ink);
+}
+
+.result[data-kind='fail'] {
+  background: var(--bad-bg);
+  border-color: var(--bad-border);
+  color: var(--bad-ink);
+  animation: shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.result .icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--muted);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font: 800 12px/1 system-ui;
+  flex: none;
+}
+
+.result[data-kind='ok'] .icon { background: var(--good); }
+.result[data-kind='fail'] .icon { background: var(--bad); }
+
+.result pre {
+  margin: 9px 0 0;
+  padding: 10px;
+  background: var(--ink-900);
+  color: #c8d0e8;
+  border-radius: 8px;
+  font: 12px/1.55 ui-monospace, Consolas, monospace;
+  overflow-x: auto;
+}
+
+details.pack {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--sunken);
+}
+
+details.pack > summary {
+  cursor: pointer;
+  font: 600 13px/1.4 system-ui;
+  color: var(--text);
+}
+
+details.pack > summary span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+details.pack[open] > *:not(summary) {
+  animation: panelIn 220ms var(--ease) both;
+}
+
+/* ---------- Панель шагов ---------- */
+
+.stepbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border);
+}
+
+.stepbar .inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10px 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
+}
+
+.stepbar .steps-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 380px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.stepbar .step {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  background: var(--sunken);
+  border-radius: 999px;
+  padding: 5px 11px 5px 6px;
+  transition: transform 140ms var(--ease), background 140ms;
+}
+
+.stepbar .step:active {
+  transform: scale(0.96);
+}
+
+.stepbar .step[data-done='true'] {
+  background: var(--good-bg);
+  border-color: var(--good-border);
+}
+
+.stepbar .step .n {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font: 800 11px/1 system-ui;
+  flex: none;
+}
+
+.stepbar .step[data-done='true'] .n {
+  background: var(--good);
+}
+
+.stepbar .step .label {
+  font: 600 12.5px/1.2 system-ui;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.stepbar .step[data-done='true'] .label {
+  color: var(--good-ink);
 }
