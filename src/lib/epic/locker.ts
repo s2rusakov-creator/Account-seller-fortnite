@@ -40,6 +40,37 @@ interface ProfileResponse {
   }[];
 }
 
+/**
+ * Ответ Epic словами, а не кодом ошибки.
+ *
+ * Продавцу важно не то, что вернулось 403, а что делать дальше: ждать, войти
+ * другим аккаунтом или отметить косметику руками. Полный ответ Epic
+ * оставляется в конце — по нему видно, что это именно их отказ, а не наша
+ * поломка.
+ */
+function explainProfileError(status: number, body: string, profileId: string): string {
+  const raw = body.slice(0, 300);
+
+  if (body.includes('missing_action') || body.includes("'PLAY'")) {
+    return (
+      'Epic не даёт читать раздевалку этого аккаунта: у него нет права играть в Fortnite. ' +
+      'Так отвечают на аккаунт с блокировкой, а ещё на совсем новый — в котором игру ни разу ' +
+      'не запускали и не принимали соглашение. Запустите на нём Fortnite один раз и попробуйте ' +
+      'снова, либо отметьте предметы вручную. Ответ Epic: ' + raw
+    );
+  }
+  if (status === 401) {
+    return 'Вход истёк — получите новый код и войдите заново. Ответ Epic: ' + raw;
+  }
+  if (status === 429) {
+    return 'Epic временно ограничил запросы — подождите пару минут. Ответ Epic: ' + raw;
+  }
+  if (status >= 500) {
+    return 'У Epic неполадки, аккаунт ни при чём — попробуйте позже. Ответ Epic: ' + raw;
+  }
+  return 'QueryProfile(' + profileId + ') → ' + status + ': ' + raw;
+}
+
 async function queryProfile(session: Session, profileId: string): Promise<ProfileResponse> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -61,7 +92,7 @@ async function queryProfile(session: Session, profileId: string): Promise<Profil
     );
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`QueryProfile(${profileId}) → ${response.status}: ${text.slice(0, 300)}`);
+      throw new Error(explainProfileError(response.status, text, profileId));
     }
     return (await response.json()) as ProfileResponse;
   } finally {
