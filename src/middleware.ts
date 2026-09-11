@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE, apiKeyOwner, authConfigured, readSession } from '@/lib/auth/session';
+import { allowRequest } from '@/lib/auth/ratelimit';
 
 /**
  * Единственная дверь в сервис.
@@ -43,7 +44,13 @@ export async function middleware(request: NextRequest) {
 
   // Кто пришёл — видно дальше по заголовку x-caller: роуты берут из него
   // Telegram ID, чтобы бот знал, в какой чат писать о публикации.
-  const pass = (caller: string) => {
+  const pass = async (caller: string) => {
+    if (!(await allowRequest(caller, pathname))) {
+      return NextResponse.json(
+        { error: 'Слишком часто — подождите минуту.' },
+        { status: 429, headers: { 'retry-after': '60' } },
+      );
+    }
     const headers = new Headers(request.headers);
     headers.set('x-caller', caller);
     return NextResponse.next({ request: { headers } });
