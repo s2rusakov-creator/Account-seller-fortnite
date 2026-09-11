@@ -7,6 +7,7 @@ import type {
   PastSeason,
 } from '@/lib/fortnite/types';
 import { killSession, type Session } from './client';
+import { starterLocker } from './starter';
 
 /**
  * Reads a locker through the same endpoint the game itself calls.
@@ -231,6 +232,13 @@ export async function readLocker(session: Session): Promise<LockerResult> {
     if (athenaResult.status === 'rejected') {
       const reason =
         athenaResult.reason instanceof Error ? athenaResult.reason.message : String(athenaResult.reason);
+
+      // Аккаунт, в который ни разу не заходили игрой: Epic не отдаёт
+      // раздевалку до первого запуска, но и содержимого там нет — только
+      // стартовый набор. Показываем его вместо отказа, пометив, откуда он.
+      if (reason.includes('missing_action') || reason.includes("'PLAY'")) {
+        return starterLocker(session.accountId, session.displayName);
+      }
       // Аккаунт Epic и доступ к Fortnite — разные вещи, и разница здесь
       // важнее текста ошибки: если сам аккаунт читается, а обе игровые
       // ручки закрыты, дело не во входе и не в сервисе.

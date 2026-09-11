@@ -41,6 +41,11 @@ export interface LockerResult {
   account?: AccountInfo;
   /** True when the list was ticked by hand instead of read from Epic. */
   manual?: boolean;
+  /**
+   * Аккаунт ни разу не запускали в игру: Epic закрыл раздевалку, и показан
+   * стартовый набор, одинаковый у всех новых аккаунтов.
+   */
+  unplayed?: boolean;
 }
 
 /**
