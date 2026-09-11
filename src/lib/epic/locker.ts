@@ -218,16 +218,33 @@ function parseVbucks(items: Record<string, ProfileItem> | undefined): number | u
  */
 export async function readLocker(session: Session): Promise<LockerResult> {
   try {
-    const [athena, core, account] = await Promise.all([
+    const [athenaResult, coreResult, accountResult] = await Promise.allSettled([
       queryProfile(session, 'athena'),
       // A brand-new account can lack common_core entirely; V-Bucks are then
       // simply unknown rather than an error that loses the whole locker.
-      queryProfile(session, 'common_core').catch(() => null),
+      queryProfile(session, 'common_core'),
       // Same token, no extra sign-in. Failing here must not cost the locker:
       // the listing is worse without the platform links, not impossible.
-      readAccountInfo(session).catch(() => undefined),
+      readAccountInfo(session),
     ]);
-    const locker = await parseProfiles(athena, core, session.accountId, session.displayName);
+
+    if (athenaResult.status === 'rejected') {
+      const reason =
+        athenaResult.reason instanceof Error ? athenaResult.reason.message : String(athenaResult.reason);
+      // Аккаунт Epic и доступ к Fortnite — разные вещи, и разница здесь
+      // важнее текста ошибки: если сам аккаунт читается, а обе игровые
+      // ручки закрыты, дело не во входе и не в сервисе.
+      throw new Error(
+        accountResult.status === 'fulfilled'
+          ? `${reason} Сам аккаунт Epic при этом читается (${session.displayName}) — значит вход прошёл, ` +
+            'закрыт именно доступ к Fortnite.'
+          : reason,
+      );
+    }
+
+    const core = coreResult.status === 'fulfilled' ? coreResult.value : null;
+    const account = accountResult.status === 'fulfilled' ? accountResult.value : undefined;
+    const locker = await parseProfiles(athenaResult.value, core, session.accountId, session.displayName);
     return { ...locker, account };
   } finally {
     await killSession(session.accessToken);
