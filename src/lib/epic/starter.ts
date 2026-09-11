@@ -14,20 +14,24 @@ import type { LockerResult, OwnedItem } from '@/lib/fortnite/types';
  * быть не может.
  */
 
+/**
+ * Список снят с живого аккаунта 11 сентября 2026 года — ровно восемь
+ * предметов, три редких и пять обычных.
+ *
+ * «Рекрутов» здесь нет намеренно: их в каталоге 29 штук трёх поколений, но
+ * аккаунту не выдаётся ни один — стартовый скин называется просто Default.
+ * Проверять список стоит раз в сезон: Epic иногда добавляет в него трек.
+ */
 const STARTER_IDS = [
-  // Восемь «рекрутов» — базовые модели, между которыми игра выбирает при
-  // первом входе. В раздевалке видно все восемь.
-  'CID_001_Athena_Commando_F_Default',
-  'CID_002_Athena_Commando_F_Default',
-  'CID_003_Athena_Commando_F_Default',
-  'CID_004_Athena_Commando_F_Default',
-  'CID_005_Athena_Commando_M_Default',
-  'CID_006_Athena_Commando_M_Default',
-  'CID_007_Athena_Commando_M_Default',
-  'CID_008_Athena_Commando_M_Default',
+  'CID_DefaultOutfit',
   'DefaultPickaxe',
   'DefaultGlider',
   'EID_DanceMoves',
+  'SparksAura_Default',
+  // Три трека, которые лежат у всех с самого начала.
+  'MusicPack_053_FortniteTrapRemix',
+  'MusicPack_143_S21_FNCS',
+  'MusicPack_196_S28DefaultTrack',
 ];
 
 export async function starterLocker(accountId: string, displayName: string): Promise<LockerResult> {
