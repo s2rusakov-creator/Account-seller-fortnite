@@ -11,6 +11,10 @@
 interface Listing {
   marketplace: string;
   url?: string;
+  /** Чем площадка называет оффер: без этого его потом не снять. */
+  offerId?: string;
+  /** Идентификатор адаптера — gameboost, eldorado. */
+  id?: string;
 }
 
 export async function notifyBot(caller: string | null, payload: {

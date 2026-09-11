@@ -92,6 +92,29 @@ export const eldorado: MarketplaceAdapter = {
     };
   },
 
+  /**
+   * Снятие объявления.
+   *
+   * Путь задаётся переменной, как и создание: схему своего API Eldorado не
+   * публикует, и вписывать сюда догадку — значит однажды удалить не то.
+   * ELDORADO_DELETE_PATH ждёт шаблон вида /api/offers/accounts/{id}.
+   */
+  async remove(offerId: string): Promise<void> {
+    const template = envOr('ELDORADO_DELETE_PATH', '');
+    if (!template) {
+      throw new Error('Не задан ELDORADO_DELETE_PATH — снимите объявление в кабинете площадки.');
+    }
+
+    const path = template.includes('{id}')
+      ? template.replace('{id}', encodeURIComponent(offerId))
+      : `${template.replace(/\/$/, '')}/${encodeURIComponent(offerId)}`;
+
+    const response = await fetch(`${base()}${path}`, { method: 'DELETE', headers: headers() });
+    if (!response.ok && response.status !== 404) {
+      throw new Error(`Eldorado ${response.status}: ${(await response.text()).slice(0, 200)}`);
+    }
+  },
+
   async upload(input, { dryRun }): Promise<UploadResult> {
     const payload = this.buildPayload(input);
     const result: UploadResult = {

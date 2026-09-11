@@ -133,6 +133,18 @@ export const gameboost: MarketplaceAdapter = {
     });
   },
 
+  /** DELETE /v2/account-offers/{id} — у них это единственный способ снять оффер. */
+  async remove(offerId: string): Promise<void> {
+    const response = await fetch(`${base()}/account-offers/${encodeURIComponent(offerId)}`, {
+      method: 'DELETE',
+      headers: headers(),
+    });
+    // Уже удалённый оффер — не ошибка: цель достигнута.
+    if (!response.ok && response.status !== 404) {
+      throw new Error(`GameBoost ${response.status}: ${(await response.text()).slice(0, 200)}`);
+    }
+  },
+
   async upload(input, { dryRun }): Promise<UploadResult> {
     const payload = this.buildPayload(input);
     const result: UploadResult = {

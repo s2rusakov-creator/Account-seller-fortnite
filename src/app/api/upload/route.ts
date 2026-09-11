@@ -196,7 +196,12 @@ export async function POST(request: Request) {
       price: checked.input.price,
       listings: results
         .filter((result) => result.ok)
-        .map((result) => ({ marketplace: result.label, url: result.offerUrl })),
+        .map((result) => ({
+          marketplace: result.label,
+          id: result.marketplace,
+          offerId: result.offerId,
+          url: result.offerUrl,
+        })),
     });
   }
 

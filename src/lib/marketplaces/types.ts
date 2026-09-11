@@ -81,6 +81,14 @@ export interface MarketplaceAdapter {
   /** Payload preview, used by dry runs and by the UI. */
   buildPayload(input: ListingInput): unknown;
   upload(input: ListingInput, options: { dryRun: boolean }): Promise<UploadResult>;
+  /**
+   * Снимает объявление с площадки.
+   *
+   * Проданный аккаунт, объявление которого продолжает висеть, — это второй
+   * покупатель, спор и штраф площадки. Метод есть не у всех: Eldorado ждёт
+   * свой путь в переменной, и там, где снятия нет, остаётся ссылка на оффер.
+   */
+  remove?(offerId: string): Promise<void>;
 }
 
 /**
