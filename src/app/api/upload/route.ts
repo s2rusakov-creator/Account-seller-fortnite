@@ -3,6 +3,7 @@ import { getAdapter } from '@/lib/marketplaces';
 import { hostCollageImages, imageHostingConfigured } from '@/lib/marketplaces/image-hosting';
 import type { CollageImage, ListingInput, ListingStats, UploadResult } from '@/lib/marketplaces/types';
 import { MAX_TOTAL_IMAGE_BYTES, formatBytes, wireBytes } from '@/lib/upload-limits';
+import { notifyBot } from '@/lib/notify-bot';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -186,6 +187,18 @@ export async function POST(request: Request) {
       }
     }),
   );
+
+  // Журнал сделок ведёт бот, и узнать о публикации ему больше неоткуда.
+  if (!checked.dryRun && results.some((result) => result.ok)) {
+    await notifyBot(request.headers.get('x-caller'), {
+      game: 'fn',
+      label: checked.input.account.displayName,
+      price: checked.input.price,
+      listings: results
+        .filter((result) => result.ok)
+        .map((result) => ({ marketplace: result.label, url: result.offerUrl })),
+    });
+  }
 
   return NextResponse.json({ dryRun: checked.dryRun, results });
 }
