@@ -1,5 +1,6 @@
 'use client';
 
+import type { MailboxOption } from '@/app/api/mailboxes/route';
 import type { CollagePage } from '@/lib/collage';
 import { loadHistory, recordUploads, type UploadRecord } from '@/lib/history';
 import { counted } from '@/lib/plural';
@@ -56,6 +57,8 @@ export function UploadPanel({
   const [notes, setNotes] = useState('');
   /** Адрес, подставленный из бота, — подпись под полями автовыдачи. */
   const [mailboxNote, setMailboxNote] = useState<string | null>(null);
+  /** Ящики продавца: их заводят в боте заранее, здесь остаётся выбрать нужный. */
+  const [boxes, setBoxes] = useState<MailboxOption[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [share, setShare] = useState(0);
   const [results, setResults] = useState<UploadResult[]>([]);
@@ -73,6 +76,11 @@ export function UploadPanel({
     let cancelled = false;
     void (async () => {
       try {
+        const list = await fetch('/api/mailboxes')
+          .then((r) => (r.ok ? r.json() : { boxes: [] }))
+          .catch(() => ({ boxes: [] }));
+        if (!cancelled) setBoxes((list as { boxes?: MailboxOption[] }).boxes ?? []);
+
         const response = await fetch('/api/mailbox');
         if (!response.ok) return;
         const data = (await response.json()) as { found?: boolean; address?: string; password?: string | null };
@@ -249,6 +257,27 @@ export function UploadPanel({
             autoComplete="off"
             style={{ flex: '1 1 45%', minWidth: 0, background: 'var(--surface)' }}
           />
+          {boxes.length > 0 && (
+            <select
+              value={email}
+              onChange={(event) => {
+                const picked = boxes.find((box) => box.address === event.target.value);
+                setEmail(event.target.value);
+                // Пароль идёт вместе с адресом: порознь их и путают.
+                if (picked) setEmailPassword(picked.password ?? '');
+                setMailboxNote(picked ? picked.address : null);
+              }}
+              style={{ flex: '1 1 100%', minWidth: 0, background: 'var(--surface)' }}
+            >
+              <option value="">Выберите ящик из бота…</option>
+              {boxes.map((box) => (
+                <option key={box.dealId} value={box.address}>
+                  {box.address}
+                  {box.free ? ' — свободен' : box.label ? ` — ${box.label}` : ' — в работе'}
+                </option>
+              ))}
+            </select>
+          )}
           <input
             type="text"
             placeholder="Почта аккаунта"
