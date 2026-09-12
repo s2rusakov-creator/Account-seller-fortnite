@@ -54,10 +54,40 @@ export function UploadPanel({
   const [email, setEmail] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
   const [notes, setNotes] = useState('');
+  /** Адрес, подставленный из бота, — подпись под полями автовыдачи. */
+  const [mailboxNote, setMailboxNote] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [share, setShare] = useState(0);
   const [results, setResults] = useState<UploadResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Почта продажи подставляется сама.
+   *
+   * Ящик заводят и закрепляют в боте раньше, чем дело доходит до оффера, а
+   * переносить адрес с паролем руками — верный способ однажды выдать
+   * покупателю чужой ящик. Заполняются только пустые поля: то, что продавец
+   * вписал сам, важнее.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch('/api/mailbox');
+        if (!response.ok) return;
+        const data = (await response.json()) as { found?: boolean; address?: string; password?: string | null };
+        if (cancelled || !data.found || !data.address) return;
+        setEmail((current) => current || data.address!);
+        setEmailPassword((current) => current || data.password || '');
+        setMailboxNote(data.address);
+      } catch {
+        // Бот недоступен — поля просто останутся пустыми.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [history, setHistory] = useState<UploadRecord[]>([]);
 
   useEffect(() => {
@@ -198,7 +228,7 @@ export function UploadPanel({
         GameBoost считает в евро и не принимает меньше 0.99 — валюта здесь для Eldorado.
       </p>
 
-      <details className="pack" style={{ marginBottom: 14 }}>
+      <details className="pack" open style={{ marginBottom: 14 }}>
         <summary>
           Данные автовыдачи <span>— уходят только на площадку</span>
         </summary>
@@ -235,6 +265,11 @@ export function UploadPanel({
             autoComplete="off"
             style={{ flex: '1 1 45%', minWidth: 0, background: 'var(--surface)' }}
           />
+          {mailboxNote && (
+            <p className="muted" style={{ flex: '1 1 100%', margin: 0, fontSize: 12.5 }}>
+              Почта подставлена из бота — за этой продажей закреплён {mailboxNote}.
+            </p>
+          )}
           <input
             type="text"
             placeholder="Примечание покупателю"
