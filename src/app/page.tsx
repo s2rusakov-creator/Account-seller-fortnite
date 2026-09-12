@@ -15,7 +15,7 @@ import { compareItems } from '@/lib/fortnite/rarity';
 import type { LockerResult } from '@/lib/fortnite/types';
 import { breakdown, buildDescription, buildTitle, headlineItems } from '@/lib/listing';
 import { clearLocker, loadLocker, saveLocker } from '@/lib/session-store';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 /** Tiles rendered before the grid asks the seller to show more. */
 const FIRST_PAGE = 600;
@@ -26,7 +26,33 @@ const ARRIVAL_MS = 1100;
 type Tab = 'collage' | 'listing' | 'offer' | 'screenshot';
 
 export default function Home() {
+  /**
+   * Высота панели шагов — в переменную, а не в константу.
+   *
+   * Панель закреплена внизу и на узком экране переносится в две-три строки:
+   * в Telegram она вырастает вдвое против расчётных 96 пикселей, и нижняя
+   * часть страницы — как раз кнопки «Выберите файл» и подсказки — оказывалась
+   * под ней. Меряем настоящую высоту и отдаём её вёрстке.
+   */
+  const stepbarRef = useRef<HTMLDivElement | null>(null);
   const [locker, setLocker] = useState<LockerResult | null>(null);
+
+  useEffect(() => {
+    const bar = stepbarRef.current;
+    if (!bar) {
+      // Панели нет — и отступ под неё не нужен, иначе внизу повиснет пустота.
+      document.documentElement.style.removeProperty('--stepbar-h');
+      return;
+    }
+    const apply = () => {
+      document.documentElement.style.setProperty('--stepbar-h', `${bar.offsetHeight}px`);
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, [locker]);
+
   const [filter, setFilter] = useState<FilterState>(EMPTY_FILTER);
   const [limit, setLimit] = useState(FIRST_PAGE);
   const [pages, setPages] = useState<CollagePage[]>([]);
@@ -274,7 +300,7 @@ export default function Home() {
             </aside>
           </div>
 
-          <div className="stepbar">
+          <div className="stepbar" ref={stepbarRef}>
             <div className="inner">
               <div className="steps-row">
                 {steps.map((step) => (

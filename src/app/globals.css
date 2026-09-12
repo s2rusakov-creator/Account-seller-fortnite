@@ -170,8 +170,14 @@ button:disabled {
 .page {
   max-width: 1400px;
   margin: 0 auto;
-  /* Нижний отступ под фиксированную панель шагов. */
-  padding: 22px 20px 96px;
+  /*
+   * Нижний отступ под закреплённую панель шагов.
+   *
+   * Высоту панели проставляет сама страница: на узком экране она переносится
+   * в две-три строки, и жёсткие 96 пикселей оставляли низ страницы под ней.
+   * env(safe-area-inset-bottom) добавляет полосу жестов на телефоне.
+   */
+  padding: 22px 20px calc(var(--stepbar-h, 96px) + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 header.top {
@@ -959,7 +965,8 @@ details.pack[open] > *:not(summary) {
 .stepbar .inner {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 10px 20px;
+  /* Снизу — полоса жестов телефона, иначе кнопки прижимаются к самому краю. */
+  padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px));
   display: flex;
   align-items: center;
   gap: 14px;
