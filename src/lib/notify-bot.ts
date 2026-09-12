@@ -22,6 +22,13 @@ export async function notifyBot(caller: string | null, payload: {
   label?: string;
   price?: number;
   listings: Listing[];
+  /**
+   * Ящик, ушедший в объявление.
+   *
+   * По нему бот находит сделку и перестаёт предлагать эту почту как
+   * свободную: она уже обещана покупателю этого аккаунта.
+   */
+  mailbox?: string;
 }): Promise<void> {
   const url = process.env.BOT_NOTIFY_URL;
   const key = process.env.BOT_NOTIFY_KEY;

@@ -194,6 +194,7 @@ export async function POST(request: Request) {
       game: 'fn',
       label: checked.input.account.displayName,
       price: checked.input.price,
+      mailbox: checked.input.credentials.email,
       listings: results
         .filter((result) => result.ok)
         .map((result) => ({

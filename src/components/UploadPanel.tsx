@@ -269,11 +269,10 @@ export function UploadPanel({
               }}
               style={{ flex: '1 1 100%', minWidth: 0, background: 'var(--surface)' }}
             >
-              <option value="">Выберите ящик из бота…</option>
+              <option value="">Свободные ящики из бота…</option>
               {boxes.map((box) => (
                 <option key={box.dealId} value={box.address}>
                   {box.address}
-                  {box.free ? ' — свободен' : box.label ? ` — ${box.label}` : ' — в работе'}
                 </option>
               ))}
             </select>

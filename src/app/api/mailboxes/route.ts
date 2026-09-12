@@ -6,9 +6,6 @@ export interface MailboxOption {
   dealId: string;
   address: string;
   password: string | null;
-  label: string | null;
-  game: 'bs' | 'fn' | null;
-  free: boolean;
 }
 
 /**
