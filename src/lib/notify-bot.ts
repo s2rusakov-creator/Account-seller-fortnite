@@ -19,6 +19,7 @@ interface Listing {
 
 export async function notifyBot(caller: string | null, payload: {
   game: 'bs' | 'fn';
+  dealId?: string;
   label?: string;
   price?: number;
   listings: Listing[];

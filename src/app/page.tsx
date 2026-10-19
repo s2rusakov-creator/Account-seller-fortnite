@@ -90,6 +90,7 @@ export default function Home() {
   // React rendered there. A restored locker does not animate in — nothing
   // arrived, it was already here.
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('dealId')) return;
     const saved = loadLocker();
     if (saved) setLocker(saved);
   }, []);

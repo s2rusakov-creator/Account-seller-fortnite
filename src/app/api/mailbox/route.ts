@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { linkedMailbox } from '@/lib/bot-mailbox';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,11 @@ export const dynamic = 'force-dynamic';
  * поля сам.
  */
 export async function GET(request: Request) {
+  const dealId = new URL(request.url).searchParams.get('dealId');
+  if (dealId) {
+    try { return NextResponse.json(await linkedMailbox(request, dealId, 'fn'), { headers: { 'Cache-Control': 'no-store' } }); }
+    catch (error) { return NextResponse.json({ error: (error as Error).message }, { status: 409 }); }
+  }
   const url = process.env.BOT_NOTIFY_URL;
   const key = process.env.BOT_NOTIFY_KEY;
   if (!url || !key) return NextResponse.json({ found: false });

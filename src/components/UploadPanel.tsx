@@ -57,6 +57,9 @@ export function UploadPanel({
   const [notes, setNotes] = useState('');
   /** Адрес, подставленный из бота, — подпись под полями автовыдачи. */
   const [mailboxNote, setMailboxNote] = useState<string | null>(null);
+  const [dealId, setDealId] = useState<string | null>(null);
+  const [dealLabel, setDealLabel] = useState('');
+  const [dealReady, setDealReady] = useState(false);
   /** Ящики продавца: их заводят в боте заранее, здесь остаётся выбрать нужный. */
   const [boxes, setBoxes] = useState<MailboxOption[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -74,21 +77,26 @@ export function UploadPanel({
    */
   useEffect(() => {
     let cancelled = false;
+    const selectedDeal = new URLSearchParams(window.location.search).get('dealId');
+    setDealId(selectedDeal);
     void (async () => {
       try {
-        const list = await fetch('/api/mailboxes')
+        const list = selectedDeal ? { boxes: [] } : await fetch('/api/mailboxes')
           .then((r) => (r.ok ? r.json() : { boxes: [] }))
           .catch(() => ({ boxes: [] }));
         if (!cancelled) setBoxes((list as { boxes?: MailboxOption[] }).boxes ?? []);
 
-        const response = await fetch('/api/mailbox');
-        if (!response.ok) return;
-        const data = (await response.json()) as { found?: boolean; address?: string; password?: string | null };
-        if (cancelled || !data.found || !data.address) return;
+        const response = await fetch(`/api/mailbox${selectedDeal ? `?dealId=${encodeURIComponent(selectedDeal)}` : ''}`);
+        if (!response.ok) { if (selectedDeal) throw new Error('Сделка недоступна. Откройте карточку в боте заново.'); return; }
+        const data = (await response.json()) as { found?: boolean; address?: string; password?: string | null; label?: string };
+        if (cancelled) return;
+        if (!data.found || !data.address) { if (selectedDeal) throw new Error('Не найдена почта выбранной сделки.'); return; }
         setEmail((current) => current || data.address!);
         setEmailPassword((current) => current || data.password || '');
         setMailboxNote(data.address);
-      } catch {
+        if (selectedDeal) { setDealLabel(data.label || ''); setDealReady(true); setLogin(current => current || data.address!); }
+      } catch (error) {
+        if (selectedDeal && !cancelled) setError((error as Error).message);
         // Бот недоступен — поля просто останутся пустыми.
       }
     })();
@@ -140,6 +148,7 @@ export function UploadPanel({
   }
 
   async function submit(dryRun: boolean) {
+    if (dealId && !dealReady) { setError('Дождитесь загрузки почты выбранной сделки или откройте карточку в боте заново.'); return; }
     setError(null);
     setResults([]);
     setShare(0);
@@ -157,6 +166,7 @@ export function UploadPanel({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           accountId,
+          dealId: dealId || undefined,
           displayName,
           stats,
           title,
@@ -195,6 +205,7 @@ export function UploadPanel({
 
   return (
     <div className="pane">
+      {dealId && <p className="muted">Сделка из бота: {dealLabel || dealId}. Проверьте, что открыт нужный аккаунт Fortnite.</p>}
       <div className="chips" style={{ marginBottom: 12 }}>
         {markets.map((market) => (
           <button
@@ -338,7 +349,7 @@ export function UploadPanel({
             <button
               className="btn"
               onClick={() => submit(false)}
-              disabled={!canUpload || uploading}
+              disabled={!canUpload || uploading || Boolean(dealId && !dealReady)}
               data-busy={uploading ? true : undefined}
               style={{ whiteSpace: 'nowrap' }}
             >

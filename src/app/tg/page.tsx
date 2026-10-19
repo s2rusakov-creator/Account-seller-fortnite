@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { publicationTarget } from '@/lib/publication-context';
 
 /**
  * Точка входа для Mini App.
@@ -68,7 +69,7 @@ export default function TelegramEntry() {
         });
         if (cancelled) return;
         if (response.ok) {
-          window.location.replace('/');
+          window.location.replace(publicationTarget(window.location.search));
           return;
         }
         setError('Telegram не подтвердил вход. Проверьте, что у сервиса указан токен того же бота.');

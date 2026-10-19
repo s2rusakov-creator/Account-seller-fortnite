@@ -4,11 +4,13 @@ import { hostCollageImages, imageHostingConfigured } from '@/lib/marketplaces/im
 import type { CollageImage, ListingInput, ListingStats, UploadResult } from '@/lib/marketplaces/types';
 import { MAX_TOTAL_IMAGE_BYTES, formatBytes, wireBytes } from '@/lib/upload-limits';
 import { notifyBot } from '@/lib/notify-bot';
+import { verifyLinkedMailbox } from '@/lib/bot-mailbox';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 interface UploadBody {
+  dealId?: string;
   accountId?: string;
   displayName?: string;
   stats?: ListingStats;
@@ -138,6 +140,10 @@ export async function POST(request: Request) {
 
   const checked = validate(body);
   if ('error' in checked) return NextResponse.json({ error: checked.error }, { status: 400 });
+  if (body.dealId) {
+    try { await verifyLinkedMailbox(request, body.dealId, 'fn', checked.input.credentials); }
+    catch (error) { return NextResponse.json({ error: (error as Error).message }, { status: 409 }); }
+  }
 
   // GameBoost takes links, not uploads, so any pictures still travelling as
   // bytes have to be published before the offer can point at them. A dry run
@@ -192,6 +198,7 @@ export async function POST(request: Request) {
   if (!checked.dryRun && results.some((result) => result.ok)) {
     await notifyBot(request.headers.get('x-caller'), {
       game: 'fn',
+      dealId: body.dealId,
       label: checked.input.account.displayName,
       price: checked.input.price,
       mailbox: checked.input.credentials.email,
