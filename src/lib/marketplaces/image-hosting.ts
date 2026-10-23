@@ -73,24 +73,25 @@ export async function hostCollageImages(
     );
   }
 
-  // A listing re-published for the same account must not collide with the last
-  // one, and a marketplace may cache by URL, so each run gets its own prefix.
-  const run = `${accountToken(accountId)}/${Date.now()}`;
+  // Changed content gets a new hash; identical re-uploads reuse the same path.
+  const run = accountToken(accountId);
 
   return Promise.all(
     images.map(async (image) => {
+      const bytes=Buffer.from(image.base64,'base64');
+      const digest=createHash('sha256').update(image.contentType).update(bytes).digest('hex');
       const blob = await put(
-        `collages/${run}/${image.filename}`,
-        Buffer.from(image.base64, 'base64'),
+        `collages/${run}/${digest}/${image.filename}`,
+        bytes,
         {
           access: 'public',
           contentType: image.contentType,
           // A token wins when present, since it works everywhere; otherwise
           // the store id lets the SDK authenticate over OIDC on Vercel.
           ...(token ? { token } : { storeId: store }),
-          // The filename already carries the page number and the run is
-          // unique, so a suffix would only make the URL harder to read.
+          // The content hash already identifies this version of the page.
           addRandomSuffix: false,
+          allowOverwrite:true,
         },
       );
       return { url: blob.url, filename: image.filename };

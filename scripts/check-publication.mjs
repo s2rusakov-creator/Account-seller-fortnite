@@ -1,5 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import {notifyBot} from '../src/lib/notify-bot.ts';
+
+test('bot notification has a deadline and reports HTTP failures without exposing response or secrets',async()=>{
+  const oldFetch=globalThis.fetch,oldWarn=console.warn,previous={...process.env},warnings=[];
+  Object.assign(process.env,{BOT_NOTIFY_URL:'https://bot.example/api/notify',BOT_NOTIFY_KEY:'private-key'});
+  console.warn=value=>warnings.push(value);
+  try {
+    globalThis.fetch=async(_url,init)=>{
+      assert.equal(init.redirect,'error');assert.ok(init.signal instanceof AbortSignal);
+      return new Response('private-key mailbox-password',{status:500});
+    };
+    await notifyBot('tg:123',{game:'fn',listings:[]});
+    assert.equal(warnings.length,1);assert.equal(JSON.parse(warnings[0]).status,500);
+    assert.ok(!warnings.join('').includes('private-key'));assert.ok(!warnings.join('').includes('mailbox-password'));
+  }finally{globalThis.fetch=oldFetch;console.warn=oldWarn;process.env=previous;}
+});
 import { publicationTarget } from '../src/lib/publication-context.ts';
 import { linkedMailbox, verifyLinkedMailbox } from '../src/lib/bot-mailbox.ts';
 

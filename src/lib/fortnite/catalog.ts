@@ -1,4 +1,6 @@
 import type { Cosmetic } from './types';
+import { unstable_cache } from 'next/cache';
+import { gzipSync, gunzipSync } from 'node:zlib';
 
 // Re-exported so server code has one import for the catalogue and its art.
 export { featuredUrl, iconUrl } from './images';
@@ -124,11 +126,23 @@ async function download(): Promise<Catalog> {
  * Concurrent callers on a cold start share one download rather than each
  * pulling 16.5 MB — the grid and the collage both ask for it at once.
  */
+// Keep the existing rendering configuration: Cache Components would change
+// the whole app. This supported compatibility API persists public data across
+// instances; compression keeps the normalized catalogue below the cache limit.
+const sharedCatalog = unstable_cache(async () => {
+  const catalog=await download();
+  return gzipSync(JSON.stringify({items:catalog.items,fetchedAt:catalog.fetchedAt})).toString('base64');
+},['fortnite-public-catalog-gzip-v2'],{revalidate:TTL_MS/1000});
+
 export async function getCatalog(): Promise<Catalog> {
   if (cached && Date.now() - cached.fetchedAt < TTL_MS) return cached;
   if (inFlight) return inFlight;
 
-  inFlight = download()
+  inFlight = sharedCatalog()
+    .then(encoded=>{
+      const data=JSON.parse(gunzipSync(Buffer.from(encoded,'base64')).toString('utf8')) as {items:Cosmetic[];fetchedAt:number};
+      return {...index(data.items),fetchedAt:data.fetchedAt};
+    })
     .then((catalog) => {
       cached = catalog;
       return catalog;

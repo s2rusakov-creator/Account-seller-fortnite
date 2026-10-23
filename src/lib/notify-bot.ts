@@ -40,12 +40,14 @@ export async function notifyBot(caller: string | null, payload: {
   if (!Number.isFinite(chatId) || chatId <= 0) return;
 
   try {
-    await fetch(url, {
+    const response=await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': key },
       body: JSON.stringify({ chatId, ...payload }),
+      signal:AbortSignal.timeout(5000),redirect:'error',
     });
+    if(!response.ok)console.warn(JSON.stringify({event:'bot_notification_failed',status:response.status}));
   } catch {
-    // Молча: журнал — удобство, а не часть публикации.
+    console.warn(JSON.stringify({event:'bot_notification_unavailable'}));
   }
 }
